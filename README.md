@@ -21,3 +21,7 @@ Some OpenDRIVE maps don't contain a valid geo reference header (e.g. the officia
 ## Additional Features
 
 - The plugin creates some additional layers to visualize details of the reference line. This can be helpful when debugging visualization / geometry issues.
+
+## License
+
+This plugin uses parts of https://github.com/driskai/pyxodr published under MIT license.
