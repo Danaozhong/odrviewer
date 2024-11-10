@@ -83,6 +83,8 @@ class MultiGeom:
         reference_line: np.ndarray,
         offset_line: np.ndarray,
         direction="right",
+        s_start = 0.0,
+        s_end = None,
     ) -> np.ndarray:
         """
         Compute global coordinates of this multi geometry, given a reference line.
@@ -147,6 +149,12 @@ class MultiGeom:
         s_values = self.distance_array.copy()
         partition_indices = np.searchsorted(distance_line_distances, s_values)
 
+        filter_start_index = np.searchsorted(distance_line_distances, s_start)
+        filter_end_index = len(distance_line_distances)
+        if s_end is not None:
+            filter_end_index = np.searchsorted(distance_line_distances, s_end, "right") 
+
+
         existing_offsets = np.linalg.norm(offset_line - reference_line, axis=1)
 
         geometries = self.geometries
@@ -164,6 +172,14 @@ class MultiGeom:
 
         start_end_indices = zip(partition_indices[:-1], partition_indices[1:])
         for (start_index, end_index), geometry, offset_distance in zip(start_end_indices, geometries, s_values):
+            
+            # Trying to allow sub geometries
+            if filter_end_index <= s_start:
+                continue
+            end_index = min(end_index, filter_end_index)
+            start_index = max(filter_start_index, start_index)
+
+
             if start_index != end_index:  # Ignore empty slices (e.g. at the end)
                 sub_reference_line = reference_line[start_index:end_index]
                 sub_reference_line_direction_vectors = distance_line_direction_vectors[start_index:end_index]
@@ -187,8 +203,14 @@ class MultiGeom:
                 else:
                     global_coordinates.append(deepcopy(sub_reference_line))
 
+        if len(global_coordinates) == 0:
+            # In case the requested range is too small, or outside of the geometry range
+            return global_coordinates, all_local_offsets
+        
         global_coordinates = np.vstack(global_coordinates)
         all_local_offsets = np.concatenate(all_local_offsets)
 
-        assert len(all_local_offsets) == len(reference_line)
+        assert len(all_local_offsets) == (filter_end_index - filter_start_index)
+        if s_start == 0 and s_end is None:
+            assert len(all_local_offsets) == len(reference_line)
         return global_coordinates, all_local_offsets

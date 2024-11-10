@@ -28,15 +28,18 @@ class QGISOpenDriveMap:
     # The lane polygons.
     lanes: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("Polygon?crs=EPSG:4326", "lanes", "memory"))
 
+    # Lane lines / boundaries
+    boundaries: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("LineString?crs=EPSG:4326", "boundaries", "memory"))
+
     def initialize_fields(self) -> None:
         """
         This function initializes all the data fields of each feature.
         """
-        # pass
         # initialize_fields(self.reference_lines, get_reference_lines_fields())
         initialize_fields(self.lanes, get_lanes_fields())
         initialize_fields(self.reference_line_segments, get_reference_line_segments_fields())
         initialize_fields(self.reference_frames, get_reference_frame_fields())
+        initialize_fields(self.boundaries, get_boundary_fields())
 
 
 def initialize_fields(qgs_layer: QgsVectorLayer, fields: QgsFields) -> None:
@@ -84,4 +87,20 @@ def get_lanes_fields() -> QgsFields:
     fields.append(QgsField("side", QVariant.String))
     fields.append(QgsField("predecessor_ids", QVariant.String))
     fields.append(QgsField("successor_ids", QVariant.String))
+    return fields
+
+def get_boundary_fields() -> QgsFields:
+    fields = QgsFields()
+    fields.append(QgsField("road_id", QVariant.String))
+    fields.append(QgsField("lane_id", QVariant.Int))
+    fields.append(QgsField("color", QVariant.String))
+    fields.append(QgsField("height", QVariant.Double))
+    fields.append(QgsField("lane_change", QVariant.String))
+    fields.append(QgsField("material", QVariant.String))
+    fields.append(QgsField("s_offset", QVariant.Double))
+    fields.append(QgsField("type", QVariant.String))
+    fields.append(QgsField("weight", QVariant.Double))
+    fields.append(QgsField("width", QVariant.Double))
+    
+
     return fields

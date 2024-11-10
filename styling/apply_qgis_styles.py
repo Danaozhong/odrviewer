@@ -13,6 +13,7 @@ from qgis.core import (
     QgsSymbol,
     QgsVectorLayer,
     QgsWkbTypes,
+    QgsRuleBasedRenderer,
 )
 
 from odrviewer.model.qgis_odr_map import QGISOpenDriveMap
@@ -23,6 +24,7 @@ def apply_qgis_styles(odr_map: QGISOpenDriveMap) -> None:
     apply_road_reference_line_style(odr_map.reference_lines)
     apply_road_reference_frame_style(odr_map.reference_frames)
     apply_lane_polygon_style(odr_map.lanes)
+    apply_boundary_style(odr_map.boundaries)
 
 
 def get_default_polygon_symbol_type() -> QgsSymbol:
@@ -113,18 +115,18 @@ def apply_lane_polygon_style(lane_polygon_layer: QgsVectorLayer) -> None:
     def left_lane_style() -> QgsSymbol:
         symbol = get_default_polygon_symbol_type()
         vector_layer = QgsSimpleFillSymbolLayer()
-        vector_layer.setColor(QColor.fromRgb(255, 100, 255, 100))
+        vector_layer.setColor(QColor.fromRgb(255, 100, 255, 50))
         vector_layer.setStrokeStyle(Qt.PenStyle.DashLine)
-        vector_layer.setStrokeColor(QColor.fromRgb(255, 100, 255, 200))
+        vector_layer.setStrokeColor(QColor.fromRgb(255, 100, 255, 80))
         symbol.changeSymbolLayer(0, vector_layer)
         return symbol
 
     def right_lane_style() -> QgsSymbol:
         symbol = get_default_polygon_symbol_type()
         vector_layer = QgsSimpleFillSymbolLayer()
-        vector_layer.setColor(QColor.fromRgb(100, 255, 255, 100))
+        vector_layer.setColor(QColor.fromRgb(100, 255, 255, 50))
         vector_layer.setStrokeStyle(Qt.PenStyle.DashLine)
-        vector_layer.setStrokeColor(QColor.fromRgb(100, 255, 255, 200))
+        vector_layer.setStrokeColor(QColor.fromRgb(100, 255, 255, 80))
         symbol.changeSymbolLayer(0, vector_layer)
         return symbol
 
@@ -150,3 +152,116 @@ def apply_transition_style(transition_layer: QgsVectorLayer) -> None:
         return symbol
 
     transition_layer.setRenderer(QgsSingleSymbolRenderer(get_transition_style()))
+
+
+def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
+
+    def unknown_sym() -> QgsSymbol:
+        symbol = get_default_line_symbol_type()
+        symbol_layer = QgsSimpleLineSymbolLayer()
+        symbol_layer.setWidth(0.44)
+        symbol_layer.setColor(QColor.fromRgb(200, 200, 200))
+        symbol.changeSymbolLayer(0, symbol_layer)
+        return symbol
+
+
+    def logical_sym() -> QgsSymbol:
+        symbol = get_default_line_symbol_type()
+        symbol_layer = QgsSimpleLineSymbolLayer()
+        symbol_layer.setWidth(0.44)
+        symbol_layer.setColor(QColor.fromRgb(255, 0, 255))
+        symbol_layer.setPenStyle(Qt.PenStyle.DotLine)
+        symbol.changeSymbolLayer(0, symbol_layer)
+        return symbol
+
+    def painted_boundary_sym(color: QColor, dashed: bool) -> QgsSymbol:
+        symbol = get_default_line_symbol_type()
+        line_marker = QgsSimpleLineSymbolLayer()
+        line_marker.setWidth(0.44)
+        line_marker.setColor(color)
+        if dashed:
+            line_marker.setPenStyle(Qt.PenStyle.DashLine)
+        symbol.changeSymbolLayer(0, line_marker)
+        return symbol
+
+    def physical_divider_sym() -> QgsSymbol:
+        symbol = get_default_line_symbol_type()
+        line_marker = QgsSimpleLineSymbolLayer()
+        line_marker.setWidth(0.66)
+        line_marker.setColor(QColor.fromRgb(255, 0, 0))
+        symbol.changeSymbolLayer(0, line_marker)
+        return symbol
+
+    yellow = QColor.fromRgb(255, 200, 10)
+    white = QColor.fromRgb(128, 128, 128)
+
+
+    # set the color of the road based on if the road is part of an intersection.
+    root_rule = QgsRuleBasedRenderer.Rule(None)
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            painted_boundary_sym(white, True),
+            0,
+            0,
+            "type is 'broken' and color is 'white'",
+            "dashed white",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            painted_boundary_sym(yellow, True),
+            0,
+            0,
+            "type is 'broken' and color is 'yellow'",
+            "dashed yellow",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            painted_boundary_sym(white, False),
+            0,
+            0,
+            "type is 'solid' and color is 'white'",
+            "solid white",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            painted_boundary_sym(yellow, False),
+            0,
+            0,
+            "type is 'solid' and color is 'yellow'",
+            "solid yellow",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            physical_divider_sym(),
+            0,
+            0,
+            "type is 'curb'",
+            "curb",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            logical_sym(),
+            0,
+            0,
+            "type is 'none'",
+            "logical",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            unknown_sym(),
+            0,
+            0,
+            "ELSE",
+            "unknown",
+        )
+    )
+
+    cat_renderer = QgsRuleBasedRenderer(root_rule)
+    boundary_layer.setRenderer(cat_renderer)
+    boundary_layer.triggerRepaint()
