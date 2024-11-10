@@ -52,6 +52,8 @@ class LaneSection:
         lane_section_z: np.ndarray,
         traffic_orientation: TrafficOrientation,
         ignored_lane_types: Optional[Set[str]] = None,
+        s_start: float = 0.0,
+        s_end: Optional[float] = None,
     ):
         self.road_id = road_id
         self.lane_section_ordinal = lane_section_ordinal
@@ -67,6 +69,8 @@ class LaneSection:
 
         self.successor_data: Tuple[LaneSection, ConnectionPosition] = (None, None)
         self.predecessor_data: Tuple[LaneSection, ConnectionPosition] = (None, None)
+        self.s_start = s_start
+        self.s_end = s_end
 
     def __hash__(self):
         return hash((self.road_id, self.lane_section_ordinal))
@@ -93,6 +97,8 @@ class LaneSection:
                 self.traffic_orientation,
                 self.lane_section_z,
                 inner_lane=inner_lane,
+                s_start=self.s_start,
+                s_end=self.s_end,
             )
             if ignored_lanes:
                 if lane_obj.type in self.ignored_lane_types:

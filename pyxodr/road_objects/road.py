@@ -390,7 +390,7 @@ class Road:
 
     def __partition_lane_offset_line_into_lane_sections(
         self,
-    ) -> List[Tuple[etree._Element, np.ndarray]]:
+    ) -> List[Tuple[etree._Element, np.ndarray, float, float]]:
         lane_section_distances = []
         for lane_section_xml in self.road_xml.findall("lanes/laneSection"):
             lane_section_distances.append(float(lane_section_xml.attrib["s"]))
@@ -463,6 +463,8 @@ class Road:
                     get_sub_linestring(self.lane_offset_line, reference_line_distances, start_length, end_length),
                     get_sub_linestring(self.z_coordinates, reference_line_distances, start_length, end_length),
                     get_sub_linestring(self.reference_line, reference_line_distances, start_length, end_length),
+                    start_length,
+                    end_length,
                 )
             )
         return lane_section_tuples
@@ -486,6 +488,8 @@ class Road:
                 lane_sub_offset_line,
                 lane_z_coordinates,
                 lane_sub_reference_line,
+                s_start,
+                s_end
             ),
         ) in enumerate(self.__partition_lane_offset_line_into_lane_sections()):
             lane_sections.append(
@@ -498,6 +502,8 @@ class Road:
                     lane_z_coordinates,
                     self.traffic_orientation,
                     ignored_lane_types=self.ignored_lane_types,
+                    s_start=s_start,
+                    s_end=s_end
                 )
             )
 

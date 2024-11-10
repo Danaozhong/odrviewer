@@ -160,6 +160,7 @@ class OpenDriveViewer:
 
         current_map_group = QgsProject.instance().layerTreeRoot().addGroup(f"ODR_{map_name}")
 
+        self.load_layer(qgis_map.boundaries, "boundaries", current_map_group)
         self.load_layer(qgis_map.reference_lines, "reference_lines", current_map_group)
         self.load_layer(qgis_map.reference_line_segments, "reference_line_segments", current_map_group, False)
         self.load_layer(qgis_map.reference_frames, "reference_frames", current_map_group, False)
