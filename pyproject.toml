@@ -1,0 +1,32 @@
+[tool.black]
+line-length = 120
+
+[tool.ruff]
+line-length = 120
+select = [
+  "D", # pycodestyle docstrings
+  "E", # pycodestyle
+  "W", # pycodestyle
+  "F", # PyFlakes
+  "I", # isort
+  "N", # pep8-naming
+  "UP", # pyupgrade
+  "A", # flake8-builtins
+  "S", # flake8-bandit
+  "B", # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "SIM", # flake8-simplify
+  "PT", # flake8-pytest-style
+  "ERA", # eradicate
+]
+
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = [
+    # at least this three should be fine in tests:
+    "S101", # asserts allowed in tests...
+    "ARG", # Unused function args -> fixtures nevertheless are functionally relevant...
+    "FBT", # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+]
+
+[tool.ruff.pydocstyle]
+convention = "google"
