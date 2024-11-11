@@ -3,7 +3,7 @@ from qgis.core import QgsFeature
 from shapely import LineString
 
 from odrviewer.converter.global_transformer import GlobalTransformer
-from odrviewer.geometry import shapely_linestring_to_qgs_geometry
+from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_reference_frame_fields
 from odrviewer.pyxodr.geometries.base import Geometry
 from odrviewer.pyxodr.road_objects.road import Road
@@ -41,7 +41,7 @@ def get_axis(
     ref_frame_feature.setAttribute("heading", reference_geometry.heading_offset)
     ref_frame_feature.setAttribute("xoffset", reference_geometry.x_offset)
     ref_frame_feature.setAttribute("yoffset", reference_geometry.y_offset)
-    ref_frame_feature.setGeometry(shapely_linestring_to_qgs_geometry(LineString(final_coordinates)))
+    ref_frame_feature.setGeometry(shapely_geometry_to_qgs_geometry(LineString(final_coordinates)))
     return ref_frame_feature
 
 

@@ -17,6 +17,7 @@ from odrviewer.pyxodr.geometries import CubicPolynom, MultiGeom
 from odrviewer.pyxodr.utils import CurvedText, cached_property
 from odrviewer.pyxodr.enumerations import RoadMarkColor, LaneChange, RoadMarkType
 
+
 class LaneOrientation(Enum):
     """Enum representing whether a lane is left or right of the reference line."""
 
@@ -78,8 +79,6 @@ class ConnectionPosition(Enum):
         return self.value
 
 
-
-
 @dataclass
 class RoadMark:
     color: RoadMarkColor
@@ -90,6 +89,7 @@ class RoadMark:
     type: RoadMarkType
     weight: Optional[float]
     width: Optional[float]
+
 
 class Lane:
     """
@@ -151,7 +151,6 @@ class Lane:
         self.lane_z_coords = lane_z_coords
         self.s_start = s_start
         self.s_end = s_end
-        
 
         if inner_lane is None:
             self.lane_reference_line = lane_offset_line
@@ -215,12 +214,11 @@ class Lane:
             lane_type = None
         return lane_type
 
-
     @cached_property
     def boundary_line(self) -> np.ndarray:
         return self.get_boundary_line_segment()
 
-    def get_boundary_line_segment(self, s_start = 0.0, s_end = None) -> np.ndarray:
+    def get_boundary_line_segment(self, s_start=0.0, s_end=None) -> np.ndarray:
         """
         Return the boundary line of this lane.
 
@@ -272,7 +270,7 @@ class Lane:
             self.lane_reference_line if lane_uses_widths else self.lane_offset_line,
             direction="left" if self.orientation is LaneOrientation.LEFT else "right",
             s_start=s_start,
-            s_end=s_end
+            s_end=s_end,
         )
 
         return global_lane_coords
@@ -368,16 +366,18 @@ class Lane:
         """
         road_marks: list[RoadMark] = []
         for road_mark_xml in self.lane_xml.findall("roadMark"):
-            road_marks.append(RoadMark(
-                color=road_mark_xml.get("color", RoadMarkColor.INVALID),
-                height=float(road_mark_xml.get("height", 0.0)),
-                lane_change=road_mark_xml.get("laneChange", None),
-                material=road_mark_xml.get("material", None),
-                s_offset=float(road_mark_xml.get("sOffset", 0.0)),
-                type=road_mark_xml.get("type", RoadMarkType.INVALID),
-                weight=road_mark_xml.get("weight", None),
-                width=road_mark_xml.get("width", None),
-            ))
+            road_marks.append(
+                RoadMark(
+                    color=road_mark_xml.get("color", RoadMarkColor.INVALID),
+                    height=float(road_mark_xml.get("height", 0.0)),
+                    lane_change=road_mark_xml.get("laneChange", None),
+                    material=road_mark_xml.get("material", None),
+                    s_offset=float(road_mark_xml.get("sOffset", 0.0)),
+                    type=road_mark_xml.get("type", RoadMarkType.INVALID),
+                    weight=road_mark_xml.get("weight", None),
+                    width=road_mark_xml.get("width", None),
+                )
+            )
         return sorted(road_marks, key=lambda x: x.s_offset)
 
     def plot(

@@ -1,4 +1,6 @@
 from enum import StrEnum
+from itertools import chain
+
 
 class RoadMarkColor(StrEnum):
     INVALID = "invalid"
@@ -11,6 +13,7 @@ class RoadMarkColor(StrEnum):
     WHITE = "white"
     VIOLET = "violet"
     YELLOW = "yellow"
+
 
 class RoadMarkType(StrEnum):
     INVALID = "invalid"
@@ -34,3 +37,47 @@ class LaneChange(StrEnum):
     DECREASE = "decrease"
     INCREASE = "increase"
     NONE = "none"
+
+
+class Orientation(StrEnum):
+    PLUS = "+"
+    MINUS = "-"
+    NONE = "none"
+
+
+class UnitDistance(StrEnum):
+    FOOT = "ft"
+    KILOMETER = "km"
+    METER = "m"
+    MILE = "mile"
+
+
+class UnitSpeed(StrEnum):
+    KM_PER_HOUR = "km/h"
+    METER_PER_SECOND = "m/s"
+    MILES_PER_HOUR = "mph"
+
+
+class UnitMass(StrEnum):
+    KILOGRAM = "kg"
+    TON = "t"
+
+
+class UnitSlope(StrEnum):
+    PERCENT = "%"
+
+
+CountryCode = str
+
+
+class Unit(StrEnum):
+    FOOT = "ft"
+    KILOMETER = "km"
+    METER = "m"
+    MILE = "mile"
+    KM_PER_HOUR = "km/h"
+    METER_PER_SECOND = "m/s"
+    MILES_PER_HOUR = "mph"
+    KILOGRAM = "kg"
+    TON = "t"
+    PERCENT = "%"

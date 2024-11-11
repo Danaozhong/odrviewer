@@ -2,7 +2,8 @@ from typing import Any
 
 import numpy as np
 from qgis.core import QgsGeometry
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString
+from shapely.geometry.base import BaseGeometry
 
 
 def np_linestring_to_qgs_geometry(linestring: Any) -> QgsGeometry:
@@ -12,18 +13,13 @@ def np_linestring_to_qgs_geometry(linestring: Any) -> QgsGeometry:
     """
     # The type hint of linestring should be npt.NDArray[np.float64],
     # but the numpy version of QGIS doesn't provide numpy.typing.
-    return shapely_linestring_to_qgs_geometry(LineString(linestring))
+    return shapely_geometry_to_qgs_geometry(LineString(linestring))
 
 
-def shapely_linestring_to_qgs_geometry(linestring: LineString) -> QgsGeometry:
+def shapely_geometry_to_qgs_geometry(shapely_geom: BaseGeometry) -> QgsGeometry:
     """
-    Converts a Shapely linestring to a QgsGeometry. It uses wkt as the intermediate
+    Converts a Shapely geometry to a QgsGeometry. It uses wkt as the intermediate
     conversion step, mainly because QGIS vector layers only support WKT.
     """
-    wkt = linestring.wkt
-    return QgsGeometry.fromWkt(wkt)
-
-
-def shaplely_poygon_to_qgs_geometry(polygon: Polygon) -> QgsGeometry:
-    wkt = polygon.wkt
+    wkt = shapely_geom.wkt
     return QgsGeometry.fromWkt(wkt)
