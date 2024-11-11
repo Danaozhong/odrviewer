@@ -25,6 +25,7 @@ def apply_qgis_styles(odr_map: QGISOpenDriveMap) -> None:
     apply_road_reference_frame_style(odr_map.reference_frames)
     apply_lane_polygon_style(odr_map.lanes)
     apply_boundary_style(odr_map.boundaries)
+    apply_signal_layer_style(odr_map.signals)
 
 
 def get_default_polygon_symbol_type() -> QgsSymbol:
@@ -155,7 +156,6 @@ def apply_transition_style(transition_layer: QgsVectorLayer) -> None:
 
 
 def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
-
     def unknown_sym() -> QgsSymbol:
         symbol = get_default_line_symbol_type()
         symbol_layer = QgsSimpleLineSymbolLayer()
@@ -163,7 +163,6 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
         symbol_layer.setColor(QColor.fromRgb(200, 200, 200))
         symbol.changeSymbolLayer(0, symbol_layer)
         return symbol
-
 
     def logical_sym() -> QgsSymbol:
         symbol = get_default_line_symbol_type()
@@ -195,7 +194,6 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
     yellow = QColor.fromRgb(255, 200, 10)
     white = QColor.fromRgb(128, 128, 128)
 
-
     # set the color of the road based on if the road is part of an intersection.
     root_rule = QgsRuleBasedRenderer.Rule(None)
     root_rule.appendChild(
@@ -204,7 +202,7 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
             0,
             0,
             "type is 'broken' and color is 'white'",
-            "dashed white",
+            "Dashed White Line",
         )
     )
     root_rule.appendChild(
@@ -213,7 +211,7 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
             0,
             0,
             "type is 'broken' and color is 'yellow'",
-            "dashed yellow",
+            "Dashed Yellow Line",
         )
     )
     root_rule.appendChild(
@@ -222,7 +220,7 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
             0,
             0,
             "type is 'solid' and color is 'white'",
-            "solid white",
+            "Solid White Line",
         )
     )
     root_rule.appendChild(
@@ -231,7 +229,7 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
             0,
             0,
             "type is 'solid' and color is 'yellow'",
-            "solid yellow",
+            "Solid Yellow Line",
         )
     )
     root_rule.appendChild(
@@ -240,7 +238,7 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
             0,
             0,
             "type is 'curb'",
-            "curb",
+            "Curb",
         )
     )
     root_rule.appendChild(
@@ -249,7 +247,7 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
             0,
             0,
             "type is 'none'",
-            "logical",
+            "Logical",
         )
     )
     root_rule.appendChild(
@@ -258,10 +256,142 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
             0,
             0,
             "ELSE",
-            "unknown",
+            "OTHER",
         )
     )
 
     cat_renderer = QgsRuleBasedRenderer(root_rule)
     boundary_layer.setRenderer(cat_renderer)
     boundary_layer.triggerRepaint()
+
+
+def apply_signal_layer_style(signal_point_layer: QgsVectorLayer) -> None:
+    """
+    Applies a standardized rendering to the QGIS signal layer.
+    """
+
+    def get_speed_limit_sign_style() -> QgsSymbol:
+        symbol = get_default_point_symbol_type()
+        symbol_marker = QgsSimpleMarkerSymbolLayer()
+        symbol_marker.setShape(Qgis.MarkerShape.Square)
+        symbol_marker.setColor(QColor.fromRgb(255, 255, 255))
+        symbol_marker.setSize(2.0)
+        symbol.changeSymbolLayer(0, symbol_marker)
+        return symbol
+
+    def get_yield_sign_style() -> QgsSymbol:
+        symbol = get_default_point_symbol_type()
+        symbol_marker = QgsSimpleMarkerSymbolLayer()
+        symbol_marker.setShape(Qgis.MarkerShape.Triangle)
+        symbol_marker.setAngle(180.0)
+        symbol_marker.setSize(2.0)
+        symbol.changeSymbolLayer(0, symbol_marker)
+        return symbol
+
+    def get_stop_sign_style() -> QgsSymbol:
+        symbol = get_default_point_symbol_type()
+        symbol_marker = QgsSimpleMarkerSymbolLayer()
+        symbol_marker.setColor(QColor.fromRgb(255, 0, 0))
+        symbol_marker.setShape(Qgis.MarkerShape.Octagon)
+        symbol_marker.setSize(2.0)
+        symbol.changeSymbolLayer(0, symbol_marker)
+        return symbol
+
+    def get_traffic_light() -> QgsSymbol:
+        symbol = get_default_point_symbol_type()
+        symbol_marker = QgsSimpleMarkerSymbolLayer()
+        symbol_marker.setShape(Qgis.MarkerShape.Circle)
+        symbol_marker.setColor(QColor.fromRgb(255, 0, 0))
+        symbol_marker.setSize(2.0)
+        symbol.changeSymbolLayer(0, symbol_marker)
+        return symbol
+
+    def get_pedestrian_crossing_sign() -> QgsSymbol:
+        symbol = get_default_point_symbol_type()
+        symbol_marker = QgsSimpleMarkerSymbolLayer()
+        symbol_marker.setShape(Qgis.MarkerShape.Circle)
+        symbol_marker.setColor(QColor.fromRgb(255, 155, 20))
+        symbol_marker.setAngle(180.0)
+        symbol_marker.setSize(2.0)
+        symbol.changeSymbolLayer(0, symbol_marker)
+        return symbol
+
+    def get_other_sign_style() -> QgsSymbol:
+        symbol = get_default_point_symbol_type()
+        symbol_marker = QgsSimpleMarkerSymbolLayer()
+        symbol_marker.setColor(QColor.fromRgb(100, 100, 100))
+        symbol_marker.setSize(2.0)
+        symbol.changeSymbolLayer(0, symbol_marker)
+        return symbol
+
+    # TODO - right now, this uses the German standard for signs.
+    # Eventually, the country code should be evaluated as well.
+
+    root_rule = QgsRuleBasedRenderer.Rule(None)
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            get_pedestrian_crossing_sign(),
+            0,
+            0,
+            "(country is 'US' and type is 'R9-8') or (country is 'DE' and type is '101-11')",
+            "Pedestrian Crossing Sign",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            get_traffic_light(),
+            0,
+            0,
+            "country is 'OpenDRIVE' and type is '1000001'",
+            "Traffic Light (3 bulb vertical)",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            get_traffic_light(),
+            0,
+            0,
+            "country is 'OpenDRIVE' and type is '1000009'",
+            "Traffic Light (2 bulb vertical)",
+        )
+    )
+
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            get_speed_limit_sign_style(),
+            0,
+            0,
+            "country is 'US' and type is 'R2-1'",
+            "Speed Limit Sign (50mph)",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            get_yield_sign_style(),
+            0,
+            0,
+            "(country is 'US' and type is 'R1-2') or (country is 'DE' and type is '205')",
+            "Yield Sign",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            get_stop_sign_style(),
+            0,
+            0,
+            "(country is 'US' and type is 'R1-1') or (country is 'DE' and type is '206')",
+            "Stop Sign",
+        )
+    )
+    root_rule.appendChild(
+        QgsRuleBasedRenderer.Rule(
+            get_other_sign_style(),
+            0,
+            0,
+            "ELSE",
+            "Other",
+        )
+    )
+
+    cat_renderer = QgsRuleBasedRenderer(root_rule)
+    signal_point_layer.setRenderer(cat_renderer)

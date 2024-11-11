@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from lxml import etree
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, Point
 
 from odrviewer.pyxodr.geometries import Arc, CubicPolynom, Line, MultiGeom, ParamCubicPolynom, Spiral
 from odrviewer.pyxodr.geometries.base import Geometry
@@ -13,6 +13,7 @@ from odrviewer.pyxodr.road_objects.lane_section import LaneSection
 from odrviewer.pyxodr.utils import cached_property
 from odrviewer.pyxodr.utils.array import interpolate_path
 from odrviewer.pyxodr.utils.curved_text import CurvedText
+from odrviewer.pyxodr.signals.signal import Signal
 
 
 class Road:
@@ -483,14 +484,7 @@ class Road:
         lane_sections = []
         for (
             i,
-            (
-                lane_section_xml,
-                lane_sub_offset_line,
-                lane_z_coordinates,
-                lane_sub_reference_line,
-                s_start,
-                s_end
-            ),
+            (lane_section_xml, lane_sub_offset_line, lane_z_coordinates, lane_sub_reference_line, s_start, s_end),
         ) in enumerate(self.__partition_lane_offset_line_into_lane_sections()):
             lane_sections.append(
                 LaneSection(
@@ -503,7 +497,7 @@ class Road:
                     self.traffic_orientation,
                     ignored_lane_types=self.ignored_lane_types,
                     s_start=s_start,
-                    s_end=s_end
+                    s_end=s_end,
                 )
             )
 
@@ -560,6 +554,30 @@ class Road:
         }
 
         return _junction_connecting_ids
+
+    @property
+    def signals(self) -> list[Signal]:
+        if (signals_node := self.road_xml.find("signals")) is not None:
+            return [Signal.from_xml_node(sig_node) for sig_node in signals_node.findall("signal")]
+        return []
+
+    def get_coordinate_and_direction(self, s: float) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
+        """
+        At a given s, returns the orientation of the reference line, and the direction vector.
+        """
+        reference_line_direction_vectors = np.diff(self.reference_line, axis=0)
+        reference_line_distances = np.cumsum(np.linalg.norm(reference_line_direction_vectors, axis=1))
+        reference_line_distances = np.insert(reference_line_distances, 0, 0)
+        s_index = np.searchsorted(reference_line_distances, s)
+
+        if s_index >= len(self.reference_line):
+            s_index = len(self.reference_line) - 1
+
+        # For the last point, use the previous direction vector
+        dir_index = s_index
+        if dir_index == len(self.reference_line) - 1:
+            dir_index -= 1
+        return self.reference_line[s_index], reference_line_direction_vectors[dir_index]
 
     def plot(
         self,

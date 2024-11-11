@@ -29,7 +29,12 @@ class QGISOpenDriveMap:
     lanes: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("Polygon?crs=EPSG:4326", "lanes", "memory"))
 
     # Lane lines / boundaries
-    boundaries: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("LineString?crs=EPSG:4326", "boundaries", "memory"))
+    boundaries: QgsVectorLayer = field(
+        default_factory=lambda: QgsVectorLayer("LineString?crs=EPSG:4326", "boundaries", "memory")
+    )
+
+    # Signs (without geometry representation)
+    signals: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("Point?crs=EPSG:4326", "signals", "memory"))
 
     def initialize_fields(self) -> None:
         """
@@ -40,6 +45,7 @@ class QGISOpenDriveMap:
         initialize_fields(self.reference_line_segments, get_reference_line_segments_fields())
         initialize_fields(self.reference_frames, get_reference_frame_fields())
         initialize_fields(self.boundaries, get_boundary_fields())
+        initialize_fields(self.signals, get_signal_fields())
 
 
 def initialize_fields(qgs_layer: QgsVectorLayer, fields: QgsFields) -> None:
@@ -89,6 +95,7 @@ def get_lanes_fields() -> QgsFields:
     fields.append(QgsField("successor_ids", QVariant.String))
     return fields
 
+
 def get_boundary_fields() -> QgsFields:
     fields = QgsFields()
     fields.append(QgsField("road_id", QVariant.String))
@@ -101,6 +108,26 @@ def get_boundary_fields() -> QgsFields:
     fields.append(QgsField("type", QVariant.String))
     fields.append(QgsField("weight", QVariant.Double))
     fields.append(QgsField("width", QVariant.Double))
-    
+    return fields
 
+
+def get_signal_fields() -> QgsFields:
+    fields = QgsFields()
+    fields.append(QgsField("country_revision", QVariant.String))
+    fields.append(QgsField("country", QVariant.String))
+    fields.append(QgsField("dynamic", QVariant.Bool))
+    fields.append(QgsField("h_offset", QVariant.Double))
+    fields.append(QgsField("id", QVariant.String))
+    fields.append(QgsField("length", QVariant.Double))
+    fields.append(QgsField("name", QVariant.String))
+    fields.append(QgsField("orientation", QVariant.String))
+    fields.append(QgsField("pitch", QVariant.Double))
+    fields.append(QgsField("roll", QVariant.Double))
+    fields.append(QgsField("s", QVariant.Double))
+    fields.append(QgsField("subtype", QVariant.String))
+    fields.append(QgsField("t", QVariant.Double))
+    fields.append(QgsField("type", QVariant.String))
+    fields.append(QgsField("text", QVariant.String))
+    fields.append(QgsField("width", QVariant.Double))
+    fields.append(QgsField("z_offset", QVariant.Double))
     return fields
