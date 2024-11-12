@@ -1,8 +1,8 @@
+"""This file stored functionality related to parsing/visualizing an OpenDRIVE lane."""
 from __future__ import annotations
 
-from enum import Enum
-from typing import List, Optional, Set, Tuple
 from dataclasses import dataclass
+from enum import Enum
 
 try:
     from typing import Literal
@@ -13,9 +13,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from lxml import etree
 
+from odrviewer.pyxodr.enumerations import LaneChange, RoadMarkColor, RoadMarkType
 from odrviewer.pyxodr.geometries import CubicPolynom, MultiGeom
 from odrviewer.pyxodr.utils import CurvedText, cached_property
-from odrviewer.pyxodr.enumerations import RoadMarkColor, LaneChange, RoadMarkType
 
 
 class LaneOrientation(Enum):
@@ -26,8 +26,7 @@ class LaneOrientation(Enum):
 
 
 class TrafficOrientation(Enum):
-    """
-    Enum representing whether a road is right-hand-drive or left-hand-drive.
+    """Enum representing whether a road is right-hand-drive or left-hand-drive.
 
     If right hand drive, lanes with positive IDs will have their centre line directions
     flipped (as these lanes will be on the left of the road reference line
@@ -46,8 +45,7 @@ class ConnectionPosition(Enum):
 
     @classmethod
     def from_contact_point_str(cls, contact_point_str: str) -> ConnectionPosition:
-        """
-        Create a ConnectionPosition enum from an OpenDRIVE e_contactPoint string.
+        """Create a ConnectionPosition enum from an OpenDRIVE e_contactPoint string.
 
         See OpenDRIVE Spec Table 105.
 
@@ -56,12 +54,12 @@ class ConnectionPosition(Enum):
         contact_point_str : str
             e_contactPoint string.
 
-        Returns
+        Returns:
         -------
         ConnectionPosition
             Connection Position enum.
 
-        Raises
+        Raises:
         ------
         ValueError
             If an unknown contact point string is passed in.
@@ -81,19 +79,20 @@ class ConnectionPosition(Enum):
 
 @dataclass
 class RoadMark:
+    """Stores a road marking OpenDRIVE attribute (e.g. a lane line or curb)."""
+
     color: RoadMarkColor
-    height: Optional[float]
-    lane_change: Optional[LaneChange]
-    material: Optional[str]
+    height: float | None
+    lane_change: LaneChange | None
+    material: str | None
     s_offset: float
     type: RoadMarkType
-    weight: Optional[float]
-    width: Optional[float]
+    weight: float | None
+    width: float | None
 
 
 class Lane:
-    """
-    Class representing a Lane in an OpenDRIVE file.
+    """Class representing a Lane in an OpenDRIVE file.
 
     Parameters
     ----------
@@ -139,8 +138,9 @@ class Lane:
         lane_z_coords: np.ndarray,
         inner_lane: Lane = None,
         s_start: float = 0.0,
-        s_end: Optional[float] = None,
+        s_end: float | None = None,
     ):
+        """Constructor."""
         self.road_id = road_id
         self.lane_section_id = lane_section_id
         self.lane_xml = lane_xml
@@ -157,16 +157,19 @@ class Lane:
         else:
             self.lane_reference_line = inner_lane.boundary_line
 
-        self.successor_data: List[Tuple[Lane, str]] = []
-        self.predecessor_data: List[Tuple[Lane, str]] = []
+        self.successor_data: list[tuple[Lane, str]] = []
+        self.predecessor_data: list[tuple[Lane, str]] = []
 
     def __getitem__(self, name):
+        """Returns a lane attribute, if set."""
         return self.lane_xml.attrib[name]
 
     def __hash__(self):
+        """Creates a unique hash based on a tuple of road, lane section and lane IDs."""
         return hash((self.road_id, self.lane_section_id, self.id))
 
     def __repr__(self):
+        """Human-readable representation of the Lane."""
         return f"Lane_{self.id}/Section_{self.lane_section_id}/Road_{self.road_id}"
 
     @property
@@ -175,12 +178,12 @@ class Lane:
         return int(self["id"])
 
     @property
-    def successor_ids(self) -> List[int]:
+    def successor_ids(self) -> list[int]:
         """Get the OpenDRIVE IDs of the successor lanes to this lane."""
         return self._get_connecting_ids("successor")
 
     @property
-    def predecessor_ids(self) -> List[int]:
+    def predecessor_ids(self) -> list[int]:
         """Get the OpenDRIVE IDs of the predecessor lanes to this lane."""
         return self._get_connecting_ids("predecessor")
 
@@ -216,19 +219,19 @@ class Lane:
 
     @cached_property
     def boundary_line(self) -> np.ndarray:
-        return self.get_boundary_line_segment()
-
-    def get_boundary_line_segment(self, s_start=0.0, s_end=None) -> np.ndarray:
-        """
-        Return the boundary line of this lane.
+        """Return the boundary line of this lane.
 
         Note this is the _far_ boundary, i.e. furthest from the road centre
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Boundary of the far edge of the lane.
         """
+        return self.get_boundary_line_segment()
+
+    def get_boundary_line_segment(self, s_start=0.0, s_end=None) -> np.ndarray:
+        """Returns a subset of boundary geometry, based on a range for the 's' parameter."""
         if len(self.lane_section_reference_line) == 0:
             raise IndexError(f"Zero length reference line in lane {self}")
 
@@ -277,13 +280,12 @@ class Lane:
 
     @cached_property
     def centre_line(self) -> np.ndarray:
-        """
-        Return the centre line of this lane.
+        """Return the centre line of this lane.
 
         Centre line is computed as halfway between the lane reference line and the lane
         boundary.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Coordinates of the lane centre line.
@@ -294,13 +296,12 @@ class Lane:
 
     @property
     def _traffic_flows_in_opposite_direction_to_centre_line(self) -> bool:
-        """
-        Return bool representing whether traffic flows in opposite direction to centre.
+        """Return bool representing whether traffic flows in opposite direction to centre.
 
         Considering the traffic orientation (RHT or LHT) and whether this lane is to the
         right or to the left of the centre line.
 
-        Returns
+        Returns:
         -------
         bool
             True if the traffic flows in the opposite direction to the centre line.
@@ -313,10 +314,9 @@ class Lane:
 
     @property
     def traffic_flow_line(self) -> np.ndarray:
-        """
-        Return the centre line in the direction along which traffic would flow.
+        """Return the centre line in the direction along which traffic would flow.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Coordinates of the centre line in the order of (legal) traffic flow.
@@ -329,16 +329,15 @@ class Lane:
         return traffic_flow_line
 
     @property
-    def traffic_flow_successors(self) -> Set[Lane]:
-        """
-        Return the successors of this lane that traffic could legally flow to.
+    def traffic_flow_successors(self) -> set[Lane]:
+        """Return the successors of this lane that traffic could legally flow to.
 
-        Returns
+        Returns:
         -------
         Set[Lane]
             Set of successor lanes according to traffic flow.
         """
-        successor_lanes = set([])
+        successor_lanes = set()
         if self._traffic_flows_in_opposite_direction_to_centre_line:
             successor_data = self.predecessor_data
         else:
@@ -360,10 +359,8 @@ class Lane:
         return successor_lanes
 
     @property
-    def road_marks(self) -> List[RoadMark]:
-        """
-        Returns the road marks associated to the lane. List is sorted by the `sOffset`.
-        """
+    def road_marks(self) -> list[RoadMark]:
+        """Returns the road marks associated to the lane. List is sorted by the `sOffset`."""
         road_marks: list[RoadMark] = []
         for road_mark_xml in self.lane_xml.findall("roadMark"):
             road_marks.append(
@@ -385,10 +382,9 @@ class Lane:
         axis: plt.Axes,
         plot_start_and_end: bool = False,
         line_scale_factor: float = 1.0,
-        label_size: Optional[int] = None,
+        label_size: int | None = None,
     ) -> plt.Axes:
-        """
-        Plot a visualisation of lane on a provided axis object.
+        """Plot a visualisation of lane on a provided axis object.
 
         Parameters
         ----------
@@ -404,7 +400,7 @@ class Lane:
             line of the form "l_n_s_m" where n is the ID of this lane, m is the id of
             the lane section. By default None, resulting in no labels.
 
-        Returns
+        Returns:
         -------
         plt.Axes
             Axis with the lane plotted on it.

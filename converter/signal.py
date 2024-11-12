@@ -1,3 +1,4 @@
+"""Contains the functions to convert OpenDRIVE signals to QGIS."""
 import numpy as np
 from qgis.core import QgsFeature
 from shapely import Point
@@ -9,6 +10,7 @@ from odrviewer.pyxodr.road_objects.road import Road
 
 
 def convert_signals(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
+    """Converts all signals within an OpenDRIVE road to QGS vector layer features."""
     signal_features: list[QgsFeature] = []
     for signal in road.signals:
         # Create a line segment feature in QGIS.

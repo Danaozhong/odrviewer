@@ -1,3 +1,4 @@
+"""The main conversion functions to convert from OpenDRIVE to QGIS."""
 from pathlib import Path
 
 from pyproj import CRS, Transformer
@@ -6,14 +7,15 @@ from qgis.core import Qgis, QgsFeature, QgsMessageLog
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.converter.lane import convert_lanes, convert_road_markings
 from odrviewer.converter.reference_frame import convert_reference_frames
-from odrviewer.converter.signal import convert_signals
 from odrviewer.converter.reference_line import convert_reference_line, convert_reference_line_segments
+from odrviewer.converter.signal import convert_signals
+from odrviewer.model.projections import WGS84
 from odrviewer.model.qgis_odr_map import QGISOpenDriveMap
 from odrviewer.pyxodr.road_objects.network import RoadNetwork
-from odrviewer.model.projections import WGS84
 
 
 def load_odr_map(odr_filename: Path) -> QGISOpenDriveMap:
+    """Loads an OpenDRIVE map from the file system, and converts it to QGIS vector layers."""
     rn = RoadNetwork(str(odr_filename))
     qgis_map = QGISOpenDriveMap()
     qgis_map.initialize_fields()
@@ -23,14 +25,14 @@ def load_odr_map(odr_filename: Path) -> QGISOpenDriveMap:
     try:
         proj_str = rn.get_geometry_reference()
         from_crs = CRS.from_proj4(proj_str)
-    except:
+    except BaseException:
         # if no proj string is set, or the proj string cannot be parsed, assume WGS-84 coordinates
         from_crs = WGS84
     try:
         x_off, y_off, z_off, heading_off = rn.get_offset()
-    except:
+    except BaseException:
         # if the offsets are not set, assume them to be 0
-        x_off, y_off, z_off, heading_off = 0, 0, 0, 0
+        x_off, y_off, z_off, _heading_off = 0, 0, 0, 0
 
     transformer = GlobalTransformer(
         Transformer.from_crs(crs_from=from_crs, crs_to=WGS84, always_xy=True), x_off, y_off, z_off

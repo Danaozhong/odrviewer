@@ -1,8 +1,10 @@
+"""This file contains all enumeration types specified in OpenDRIVE."""
 from enum import StrEnum
-from itertools import chain
 
 
 class RoadMarkColor(StrEnum):
+    """Enumeration for the color of road markings."""
+
     INVALID = "invalid"
     BLACK = "black"
     BLUE = "blue"
@@ -16,6 +18,8 @@ class RoadMarkColor(StrEnum):
 
 
 class RoadMarkType(StrEnum):
+    """Enumeration for road marking types."""
+
     INVALID = "invalid"
     BOTTS_DOTS = "botts dots"
     BROKEN_BROKEN = "broken broken"
@@ -32,6 +36,8 @@ class RoadMarkType(StrEnum):
 
 
 class LaneChange(StrEnum):
+    """Enumeration for lane change types."""
+
     INVALID = "invalid"
     BOTH = "both"
     DECREASE = "decrease"
@@ -40,12 +46,16 @@ class LaneChange(StrEnum):
 
 
 class Orientation(StrEnum):
+    """Enumeration for orientation (relative to something else)."""
+
     PLUS = "+"
     MINUS = "-"
     NONE = "none"
 
 
 class UnitDistance(StrEnum):
+    """Enumeration for distance units."""
+
     FOOT = "ft"
     KILOMETER = "km"
     METER = "m"
@@ -53,17 +63,23 @@ class UnitDistance(StrEnum):
 
 
 class UnitSpeed(StrEnum):
+    """Enumeration for speed units."""
+
     KM_PER_HOUR = "km/h"
     METER_PER_SECOND = "m/s"
     MILES_PER_HOUR = "mph"
 
 
 class UnitMass(StrEnum):
+    """Enumeration for mass units."""
+
     KILOGRAM = "kg"
     TON = "t"
 
 
 class UnitSlope(StrEnum):
+    """Enumeration for slope units."""
+
     PERCENT = "%"
 
 
@@ -71,6 +87,8 @@ CountryCode = str
 
 
 class Unit(StrEnum):
+    """An enumeration of all units (speed, distance, slope, mass)."""
+
     FOOT = "ft"
     KILOMETER = "km"
     METER = "m"

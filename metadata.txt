@@ -8,7 +8,7 @@ description=A Plugin to visualize OpenDRIVE maps.
 version=0.0.1
 author=Clemens Zangl
 email=
-about=A Viewer for OpenDRIVE 
+about=A Viewer for OpenDRIVE
 tracker=
 repository=
 # End of mandatory metadata

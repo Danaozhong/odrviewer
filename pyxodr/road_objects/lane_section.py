@@ -1,3 +1,4 @@
+"""Handles an OpenDRIVE lane section (a segment of a road)."""
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
@@ -9,8 +10,7 @@ from odrviewer.pyxodr.utils import cached_property
 
 
 class LaneSection:
-    """
-    Class representing a LaneSection in an OpenDRIVE file.
+    """Class representing a LaneSection in an OpenDRIVE file.
 
     Parameters
     ----------
@@ -55,6 +55,7 @@ class LaneSection:
         s_start: float = 0.0,
         s_end: Optional[float] = None,
     ):
+        """Constructor to create a lane section."""
         self.road_id = road_id
         self.lane_section_ordinal = lane_section_ordinal
         self.lane_section_xml = lane_section_xml
@@ -65,7 +66,7 @@ class LaneSection:
         self.lane_section_z = lane_section_z
         self.traffic_orientation = traffic_orientation
 
-        self.ignored_lane_types = set([]) if ignored_lane_types is None else ignored_lane_types
+        self.ignored_lane_types = set() if ignored_lane_types is None else ignored_lane_types
 
         self.successor_data: Tuple[LaneSection, ConnectionPosition] = (None, None)
         self.predecessor_data: Tuple[LaneSection, ConnectionPosition] = (None, None)
@@ -73,9 +74,11 @@ class LaneSection:
         self.s_end = s_end
 
     def __hash__(self):
+        """Calculates a hash based on the road ID and the lane ordinal ID."""
         return hash((self.road_id, self.lane_section_ordinal))
 
     def __repr__(self):
+        """Returns a human-readable representation of a LaneSection."""
         return f"Section_{self.lane_section_ordinal}/Road_{self.road_id}"
 
     def __get_lanes_by_orientation(self, orientation: LaneOrientation, ignored_lanes: bool = False) -> List[Lane]:
@@ -111,8 +114,7 @@ class LaneSection:
         return lanes
 
     def get_offset_line(self, get_z: bool = True) -> np.ndarray:
-        """
-        Return the offset line coordinates of this lane section.
+        """Return the offset line coordinates of this lane section.
 
         Parameters
         ----------
@@ -120,7 +122,7 @@ class LaneSection:
             If true, return z data in the 3rd column of the returned coordinate array,
             by default True
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of offset line coordinates.
@@ -132,12 +134,11 @@ class LaneSection:
 
     @cached_property
     def left_lanes(self) -> List[Lane]:
-        """
-        Return a list of lane objects on the left of the lane offset line.
+        """Return a list of lane objects on the left of the lane offset line.
 
         Ordered in -> out
 
-        Returns
+        Returns:
         -------
         List[Lane]
             List of left lanes
@@ -146,12 +147,11 @@ class LaneSection:
 
     @cached_property
     def right_lanes(self) -> List[Lane]:
-        """
-        Return a list of lane objects on the right of the lane offset line.
+        """Return a list of lane objects on the right of the lane offset line.
 
         Ordered in -> out
 
-        Returns
+        Returns:
         -------
         List[Lane]
             List of right lanes
@@ -167,13 +167,11 @@ class LaneSection:
     @property
     def ignored_lane_ids(self) -> Set[int]:
         """Get IDs of lanes with types in self.ignored_lane_types."""
-        ignored_lane_ids = set(
-            [
-                lane.id
-                for lane in self.__get_lanes_by_orientation(LaneOrientation.LEFT, ignored_lanes=True)
-                + self.__get_lanes_by_orientation(LaneOrientation.RIGHT, ignored_lanes=True)
-            ]
-        )
+        ignored_lane_ids = {
+            lane.id
+            for lane in self.__get_lanes_by_orientation(LaneOrientation.LEFT, ignored_lanes=True)
+            + self.__get_lanes_by_orientation(LaneOrientation.RIGHT, ignored_lanes=True)
+        }
         return ignored_lane_ids
 
     @cached_property
@@ -184,32 +182,25 @@ class LaneSection:
         """Return a lane object from its int ID."""
         try:
             lane_obj = self._id_to_lane[lane_id]
-        except KeyError:
+        except KeyError as err:
             raise KeyError(
                 "Error while trying to retrieve lane with id "
                 + f"{lane_id} from lane section {self.lane_section_ordinal} "
                 + f"in road {self.road_id}"
-            )
+            ) from err
         return lane_obj
 
     @cached_property
     def boundary(self) -> Polygon:
         """Return the bounding polygon of this lane section."""
-        if self.left_lanes == []:
-            left_border = self.lane_section_offset_line
-        else:
-            left_border = self.left_lanes[-1].boundary_line
-        if self.right_lanes == []:
-            right_border = self.lane_section_offset_line
-        else:
-            right_border = self.right_lanes[-1].boundary_line
+        left_border = self.lane_section_offset_line if self.left_lanes == [] else self.left_lanes[-1].boundary_line
+        right_border = self.lane_section_offset_line if self.right_lanes == [] else self.right_lanes[-1].boundary_line
         bounding_poly = Polygon(np.vstack((left_border, np.flip(right_border, axis=0))))
 
         return bounding_poly
 
     def _link_lanes(self):
-        """
-        Connect all lane objects within this lane section with their neighbours.
+        """Connect all lane objects within this lane section with their neighbours.
 
         Neighbours == the lane objects corresponding to their successors and
         predecessors. This method will be called as part of the "connection" tree of
@@ -238,7 +229,7 @@ class LaneSection:
                             + f"{self.lane_section_ordinal} in "
                             + f"road {self.road_id}: "
                             + str(e)
-                        )
+                        ) from e
                     lane.predecessor_data.append((predecessor_lane_obj, predecessor_connection_position))
                     # Also duplicate this information in the other lane - ensures
                     # all connections are eventually returned by traffic_flow_successors
@@ -262,7 +253,7 @@ class LaneSection:
                             + f"{self.lane_section_ordinal} in "
                             + f"road {self.road_id}: "
                             + str(e)
-                        )
+                        ) from e
                     lane.successor_data.append((successor_lane_obj, successor_connection_position))
                     # Duplicate data as above
                     if successor_connection_position is ConnectionPosition.BEGINNING:

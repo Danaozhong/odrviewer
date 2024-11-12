@@ -1,3 +1,8 @@
+"""This file stores functions related to OpenDRIVE junctions.
+
+See https://publications.pages.asam.net/standards/ASAM_OpenDRIVE/ASAM_OpenDRIVE_Specification/latest/specification/12_junctions/12_01_introduction.html
+for more details.
+"""
 from typing import Dict, List, Set
 
 import numpy as np
@@ -8,8 +13,7 @@ from odrviewer.pyxodr.utils import cached_property
 
 
 class Junction:
-    """
-    Class representing a Junction in an OpenDRIVE file.
+    """Class representing a Junction in an OpenDRIVE file.
 
     Parameters
     ----------
@@ -21,22 +25,23 @@ class Junction:
         self,
         junction_xml: etree._Element,
     ):
+        """Constructor."""
         self.junction_xml = junction_xml
 
     @cached_property
     def _connection_attributes_list(self) -> List[dict]:
+        """Returns the connections of the junction."""
         __connection_attributes = []
         for connection_xml in self.junction_xml.findall("connection"):
             __connection_attributes.append(connection_xml.attrib)
         return __connection_attributes
 
     def get_connecting_road_ids(self) -> Set[str]:
-        """
-        Return a set of ids of the connecting roads in this junction.
+        """Return a set of ids of the connecting roads in this junction.
 
         See 10.3 in the OpenDRIVE spec.
 
-        Returns
+        Returns:
         -------
         Set[str]
             Set of str road ids making up the connecting roads in this junction.
@@ -52,12 +57,11 @@ class Junction:
         return _connecting_road_ids
 
     def get_linked_road_ids(self) -> Set[str]:
-        """
-        Return a set of ids of the linked roads in this (direct) junction.
+        """Return a set of ids of the linked roads in this (direct) junction.
 
         See 10.4 in the OpenDRIVE spec.
 
-        Returns
+        Returns:
         -------
         Set[str]
             Set of str road ids making up the linked roads in this junction.
@@ -73,12 +77,11 @@ class Junction:
         return _linked_road_ids
 
     def get_incoming_road_ids(self) -> Set[str]:
-        """
-        Return a set of ids of the incoming roads to this junction.
+        """Return a set of ids of the incoming roads to this junction.
 
         See 10.2 in the OpenDRIVE spec.
 
-        Returns
+        Returns:
         -------
         Set[str]
             Set of str road ids making up the incoming roads to this junction.
@@ -90,8 +93,7 @@ class Junction:
         return _incoming_road_ids
 
     def get_outgoing_road_ids(self, road_ids_to_objects: Dict[str, Road], fail_on_key_error: bool = True) -> Set[str]:
-        """
-        Return a set of ids of the outgoing roads from this junction.
+        """Return a set of ids of the outgoing roads from this junction.
 
         Note OpenDRIVE doesn't specifically define outgoing roads. Therefore we have
         to get these roads from the successor ids of the connecting roads, hence a
@@ -105,12 +107,12 @@ class Junction:
             If True, connecting road ids from this junction not present in the
             road_ids_to_objects dict keys will raise a KeyError, by default True
 
-        Returns
+        Returns:
         -------
         Set[str]
             A set of str roads ids making up the outgoing roads from this junction.
 
-        Raises
+        Raises:
         ------
         KeyError
             If fail_on_key_error and a connecting road id is found in this junction
@@ -132,6 +134,7 @@ class Junction:
         return _outgoing_road_ids
 
     def __getitem__(self, name):
+        """Access junction attributes."""
         return self.junction_xml.attrib[name]
 
     @property
@@ -140,20 +143,19 @@ class Junction:
         return self["id"]
 
     def closest_point_on_road(self, road_obj: Road) -> np.ndarray:
-        """
-        Find the closest coordinate in the reference line of road_obj.
+        """Find the closest coordinate in the reference line of road_obj.
 
         Parameters
         ----------
         road_obj : Road
             Road object to return the closest reference line coordinate from.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Closest reference line coordinate.
 
-        Raises
+        Raises:
         ------
         ValueError
             If the provided road doesn't connect to this junction.
@@ -164,10 +166,7 @@ class Junction:
             connecting_junction_ids,
         ) in road_obj.junction_connecting_ids.items():
             if self.id in connecting_junction_ids:
-                if position == "predecessor":
-                    closest_point = road_obj.reference_line[0]
-                else:
-                    closest_point = road_obj.reference_line[-1]
+                closest_point = road_obj.reference_line[0] if position == "predecessor" else road_obj.reference_line[-1]
         if closest_point is None:
             raise ValueError(f"Road {road_obj.id} doesn't seem to connect to junction {self.id}")
         return closest_point

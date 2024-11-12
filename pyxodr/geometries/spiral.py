@@ -1,3 +1,4 @@
+"""Functions to process OpenDRIVE spiral geometries."""
 from typing import Optional
 
 import numpy as np
@@ -7,8 +8,7 @@ from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
 
 
 class Spiral(Geometry):
-    """
-    Class representing an Euler spiral / Clothoid geometry.
+    """Class representing an Euler spiral / Clothoid geometry.
 
     Parameters
     ----------
@@ -22,24 +22,24 @@ class Spiral(Geometry):
 
     def __init__(
         self,
-        curvStart: float,
-        curvEnd: float,
+        curv_start: float,
+        curv_end: float,
         x_offset: float,
         y_offset: float,
         heading_offset: float,
         length: Optional[float] = None,
     ):
+        """Creates an OpenDRIVE spiral geometry object."""
         Geometry.__init__(self, GeometryType.SPIRAL, x_offset, y_offset, heading_offset, length)
-        self.curvStart = curvStart
-        self.curvEnd = curvEnd
+        self.curvStart = curv_start
+        self.curvEnd = curv_end
 
         self.curvature_rate_of_change = (self.curvEnd - self.curvStart) / self.length
 
         self.standard_spiral = OdrSpiral(self.curvature_rate_of_change)
 
     def __call__(self, p_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
+        r"""Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
 
         (u, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -54,7 +54,7 @@ class Spiral(Geometry):
         p_array : np.ndarray
             p values $\in [0.0, 1.0]$ to compute parametric coordinates.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (u, v) coordinate pairs.
@@ -95,8 +95,9 @@ class Spiral(Geometry):
         return rotated_xy_at_origin
 
     def u_v_from_u(self, u_array: np.ndarray) -> np.ndarray:
-        """Raise an error; this geometry is parameteric with no v from u method."""
+        """Raise an error; this geometry is parametric with no v from u method."""
         raise NotImplementedError("This geometry is only defined parametrically.")
 
     def __str__(self) -> str:
+        """Returns a string representation of the spiral parameters."""
         return f"curv_start={self.curvStart}, curv_end={self.curvEnd}"

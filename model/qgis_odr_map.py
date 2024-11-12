@@ -1,3 +1,4 @@
+"""This file stores the definitions of an OpenDRIVE map loaded in QGIS."""
 from dataclasses import dataclass, field
 
 from PyQt5.QtCore import QVariant
@@ -6,9 +7,7 @@ from qgis.core import QgsField, QgsFields, QgsVectorLayer
 
 @dataclass
 class QGISOpenDriveMap:
-    """
-    A dataclass storing an OpenDRIVE map, encoded as QGIS vector layers.
-    """
+    """A dataclass storing an OpenDRIVE map, encoded as QGIS vector layers."""
 
     # All reference lines
     reference_lines: QgsVectorLayer = field(
@@ -37,10 +36,7 @@ class QGISOpenDriveMap:
     signals: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("Point?crs=EPSG:4326", "signals", "memory"))
 
     def initialize_fields(self) -> None:
-        """
-        This function initializes all the data fields of each feature.
-        """
-        # initialize_fields(self.reference_lines, get_reference_lines_fields())
+        """This function initializes all the data fields of each feature."""
         initialize_fields(self.lanes, get_lanes_fields())
         initialize_fields(self.reference_line_segments, get_reference_line_segments_fields())
         initialize_fields(self.reference_frames, get_reference_frame_fields())
@@ -49,6 +45,7 @@ class QGISOpenDriveMap:
 
 
 def initialize_fields(qgs_layer: QgsVectorLayer, fields: QgsFields) -> None:
+    """Initializes a QGIS vector layer with attributes that apply for this layer."""
     data_provider = qgs_layer.dataProvider()
     qgs_layer.startEditing()
     data_provider.addAttributes(fields)
@@ -56,12 +53,14 @@ def initialize_fields(qgs_layer: QgsVectorLayer, fields: QgsFields) -> None:
 
 
 def get_reference_lines_fields() -> QgsFields:
+    """Gets the QGIS vector layer attributes for the reference line."""
     fields = QgsFields()
     fields.append(QgsField("id", QVariant.String))
     return fields
 
 
 def get_reference_line_segments_fields() -> QgsFields:
+    """Gets the QGIS vector layer attributes for the reference line segments."""
     fields = QgsFields()
     fields.append(QgsField("id", QVariant.String))
     fields.append(QgsField("segment_index", QVariant.Int))
@@ -75,6 +74,7 @@ def get_reference_line_segments_fields() -> QgsFields:
 
 
 def get_reference_frame_fields() -> QgsFields:
+    """Gets the QGIS vector layer attributes for the reference frame (x and y coordinate system at 0/0)."""
     fields = QgsFields()
     fields.append(QgsField("id", QVariant.String))
     fields.append(QgsField("segment_index", QVariant.Int))
@@ -86,6 +86,7 @@ def get_reference_frame_fields() -> QgsFields:
 
 
 def get_lanes_fields() -> QgsFields:
+    """Gets the QGIS vector layer attributes for lane polygons."""
     fields = QgsFields()
     fields.append(QgsField("road_id", QVariant.String))
     fields.append(QgsField("lane_id", QVariant.Int))
@@ -97,6 +98,7 @@ def get_lanes_fields() -> QgsFields:
 
 
 def get_boundary_fields() -> QgsFields:
+    """Gets the QGIS vector layer attributes for boundaries (i.e. painted line, curb)."""
     fields = QgsFields()
     fields.append(QgsField("road_id", QVariant.String))
     fields.append(QgsField("lane_id", QVariant.Int))
@@ -112,6 +114,7 @@ def get_boundary_fields() -> QgsFields:
 
 
 def get_signal_fields() -> QgsFields:
+    """Gets the QGIS vector layer attributes for signal fields (i.e. signs/traffic lights)."""
     fields = QgsFields()
     fields.append(QgsField("country_revision", QVariant.String))
     fields.append(QgsField("country", QVariant.String))
