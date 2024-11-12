@@ -1,4 +1,4 @@
-from functools import lru_cache
+"""This file stores all functions related to loading an OpenDRIVE map file."""
 from typing import List, Optional, Set
 
 import matplotlib.pyplot as plt
@@ -13,8 +13,7 @@ from odrviewer.pyxodr.utils import cached_property
 
 
 class RoadNetwork:
-    """
-    Class representing a road network from an entire OpenDRIVE file.
+    """Class representing a road network from an entire OpenDRIVE file.
 
     Parameters
     ----------
@@ -34,12 +33,13 @@ class RoadNetwork:
         resolution: float = 0.1,
         ignored_lane_types: Optional[Set[str]] = None,
     ):
+        """Constructor to to build an OpenDRIVE map from an '*.xodr' file."""
         self.tree = etree.parse(xodr_file_path)
         self.root = self.tree.getroot()
 
         self.resolution = resolution
 
-        self.ignored_lane_types = set([]) if ignored_lane_types is None else ignored_lane_types
+        self.ignored_lane_types = set() if ignored_lane_types is None else ignored_lane_types
 
         self.road_ids_to_object = {}
 
@@ -67,7 +67,6 @@ class RoadNetwork:
             float(header_offset["hdg"]),
         )
 
-    @lru_cache(maxsize=None)
     def get_junctions(self) -> List[Junction]:
         """Return the Junction objects for all junctions in this road network."""
         junctions = []
@@ -88,8 +87,7 @@ class RoadNetwork:
         return _connecting_road_ids
 
     def _link_roads(self):
-        """
-        Link all roads to their neighbours.
+        """Link all roads to their neighbours.
 
         Neighbours == successor and predecessor roads.
         Also kicks off a tree of method calls that connects all other road elements
@@ -118,14 +116,8 @@ class RoadNetwork:
             else:
                 succ_xml = succ_xmls[0]
 
-            if pred_xml is not None:
-                pred_dict = pred_xml.attrib
-            else:
-                pred_dict = None
-            if succ_xml is not None:
-                succ_dict = succ_xml.attrib
-            else:
-                succ_dict = None
+            pred_dict = pred_xml.attrib if pred_xml is not None else None
+            succ_dict = succ_xml.attrib if succ_xml is not None else None
 
             if pred_dict is not None and pred_dict["elementType"] == "road":
                 road.predecessor_data = (
@@ -140,24 +132,20 @@ class RoadNetwork:
 
             road._link_lane_sections()
 
-    @lru_cache(maxsize=None)
     def get_roads(
         self,
         include_connecting_roads: bool = True,
         verbose: bool = False,
     ) -> List[Road]:
         """Return the Road objects for all roads in this network."""
-        if not include_connecting_roads:
-            ids_to_avoid = self.connecting_road_ids
-        else:
-            ids_to_avoid = set()
+        ids_to_avoid = self.connecting_road_ids if not include_connecting_roads else set()
         roads = []
         iterator = self.root.findall("road")
         for road_xml in track(iterator) if verbose else iterator:
             road_id = road_xml.attrib["id"]
             if road_id in ids_to_avoid:
                 continue
-            if road_id in self.road_ids_to_object.keys():
+            if road_id in self.road_ids_to_object:
                 roads.append(self.road_ids_to_object[road_id])
             else:
                 road = Road(
@@ -183,8 +171,7 @@ class RoadNetwork:
         line_scale_factor: float = 1.0,
         label_size: Optional[int] = None,
     ) -> plt.Axes:
-        """
-        Plot a visualisation of this road network on a provided axis object.
+        """Plot a visualisation of this road network on a provided axis object.
 
         Parameters
         ----------
@@ -210,12 +197,12 @@ class RoadNetwork:
             of the lane section, and along each road line of the form "r_n" where n is
             the ID of the road. By default None, resulting in no labels.
 
-        Returns
+        Returns:
         -------
         plt.Axes
             Axis with the road network plotted on it.
 
-        Raises
+        Raises:
         ------
         KeyError
             Where a connecting road id from a junction is not present in the
@@ -274,8 +261,7 @@ class RoadNetwork:
         return axis
 
     def plot_z(self, axis: plt.Axes, plot_lanes: bool = True):
-        """
-        Plot a 3D visualisation of the road network, with z coordinates.
+        """Plot a 3D visualisation of the road network, with z coordinates.
 
         Parameters
         ----------
@@ -284,12 +270,12 @@ class RoadNetwork:
         plot_lanes : bool, optional
             If True, plot the lane centres, by default True
 
-        Returns
+        Returns:
         -------
         plt.Axes
             Axis with road network plotted.
 
-        Raises
+        Raises:
         ------
         IndexError
             If a NoneType lane has neighbours.

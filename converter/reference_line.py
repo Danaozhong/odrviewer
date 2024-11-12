@@ -1,3 +1,4 @@
+"""Conversion functions to convert road reference lines to QGIS linestring features."""
 import numpy as np
 from qgis.core import QgsFeature
 from shapely import LineString
@@ -10,6 +11,7 @@ from odrviewer.pyxodr.utils.array import interpolate_path
 
 
 def convert_reference_line(road: Road, transformer: GlobalTransformer) -> QgsFeature:
+    """Converts the reference line within an OpenDRIVE road to a QGS vector layer feature."""
     reference_line = transformer.translate_odr_geometry(LineString(road.reference_line))
     ref_line_feature = QgsFeature()
     ref_line_feature.setGeometry(shapely_geometry_to_qgs_geometry(reference_line))
@@ -17,6 +19,7 @@ def convert_reference_line(road: Road, transformer: GlobalTransformer) -> QgsFea
 
 
 def convert_reference_line_segments(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
+    """Converts all reference line geometry segments within an OpenDRIVE road to QGS vector layer features."""
     ref_line_segments: list[QgsFeature] = []
     for segment_index, reference_line_geometry_segment in enumerate(road.reference_line_geometries):
         # evaluate the reference line segment geometry

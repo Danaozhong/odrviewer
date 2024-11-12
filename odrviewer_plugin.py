@@ -1,9 +1,10 @@
+"""This file contains a plugin for QGIS to load and visualize OpenDRIVE maps."""
 import os.path
 from pathlib import Path
 from typing import Optional
 
 from qgis.core import Qgis, QgsLayerTreeGroup, QgsMessageLog, QgsProject, QgsVectorLayer
-from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
+from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
 
@@ -12,10 +13,10 @@ from odrviewer.styling.apply_qgis_styles import apply_qgis_styles
 
 
 class OpenDriveViewer:
+    """This class represents a plugin for QGIS to load and visualize OpenDRIVE maps."""
+
     def __init__(self, iface):
-        """
-        Constructor.
-        """
+        """Constructor."""
         # Save reference to the QGIS interface
         self.iface = iface
 
@@ -108,7 +109,7 @@ class OpenDriveViewer:
 
         return action
 
-    def initGui(self):
+    def initGui(self):  # noqa: N802
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         icon_path = ":/plugins/odrviewer/icon.png"
         self.add_action(
@@ -124,6 +125,7 @@ class OpenDriveViewer:
             self.iface.removePluginVectorMenu(self.tr("&OpenDRIVE Viewer"), action)
 
     def show_file_dialog(self) -> Optional[str]:
+        """Opens a window to select an OpenDRIVE file to open."""
         folder_dialog = QFileDialog(self.iface.mainWindow())
         folder_dialog.setWindowTitle("Select an OpenDRIVE file")
         folder_dialog.setFileMode(QFileDialog.ExistingFile)
@@ -136,9 +138,7 @@ class OpenDriveViewer:
         return None
 
     def open_map(self):
-        """
-        Loads an OpenDRIVE map.
-        """
+        """Loads an OpenDRIVE map."""
         # Open a folder select dialog, and try to read a map.
         odr_filename_str = self.show_file_dialog()
         if odr_filename_str is None:
@@ -168,9 +168,7 @@ class OpenDriveViewer:
         self.load_layer(qgis_map.lanes, "lanes", current_map_group)
 
     def load_layer(self, qgis_layer: QgsVectorLayer, name: str, group: QgsLayerTreeGroup, visible=True) -> None:
-        """
-        Adds a QGIS vector layer into QGIS. It will log an error if loading failed.
-        """
+        """Adds a QGIS vector layer into QGIS. It will log an error if loading failed."""
         added_layer = QgsProject.instance().addMapLayer(qgis_layer, False)
         group.addLayer(qgis_layer)
         if added_layer is None:

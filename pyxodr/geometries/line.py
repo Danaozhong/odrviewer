@@ -1,3 +1,4 @@
+"""Functions to process OpenDRIVE line geometries."""
 from typing import Optional
 
 import numpy as np
@@ -6,8 +7,7 @@ from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
 
 
 class Line(Geometry):
-    """
-    Class representing an line geometry.
+    """Class representing an line geometry.
 
     Parameters
     ----------
@@ -20,11 +20,11 @@ class Line(Geometry):
     """
 
     def __init__(self, x_offset: float, y_offset: float, heading_offset: float, length: Optional[float] = None):
+        """Creates a Line OpenDRIVE geometry object."""
         Geometry.__init__(self, GeometryType.LINE, x_offset, y_offset, heading_offset, length)
 
     def __call__(self, p_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
+        r"""Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
 
         (u, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -39,23 +39,20 @@ class Line(Geometry):
         p_array : np.ndarray
             p values $\in [0.0, 1.0]$ to compute parametric coordinates.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (u, v) coordinate pairs.
         """
-
         # Construct direction vector
         direction_vector = np.array([1.0, 0.0])
         direction_tensor = np.tile(direction_vector, (len(p_array), 1))
         return (direction_tensor.T * p_array).T
-        # geometry_coordinates.append(line_coordinates)
-
-        # return np.array([(0.0, 0.0), (1.0, 0.0)])
 
     def u_v_from_u(self, u_array: np.ndarray) -> np.ndarray:
-        """Raise an error; this geometry is parameteric with no v from u method."""
+        """Raise an error; this geometry is parametric with no v from u method."""
         raise NotImplementedError("This geometry is only defined parametrically.")
 
     def __str__(self) -> str:
+        """Returns a string representation of the line geometry."""
         return ""

@@ -1,24 +1,24 @@
+"""Stores functions to process OpenDRIVE roads."""
 from typing import Dict, List, Optional, Set, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from lxml import etree
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon
 
 from odrviewer.pyxodr.geometries import Arc, CubicPolynom, Line, MultiGeom, ParamCubicPolynom, Spiral
 from odrviewer.pyxodr.geometries.base import Geometry
 from odrviewer.pyxodr.road_objects.lane import ConnectionPosition, TrafficOrientation
 from odrviewer.pyxodr.road_objects.lane_section import LaneSection
+from odrviewer.pyxodr.signals.signal import Signal
 from odrviewer.pyxodr.utils import cached_property
 from odrviewer.pyxodr.utils.array import interpolate_path
 from odrviewer.pyxodr.utils.curved_text import CurvedText
-from odrviewer.pyxodr.signals.signal import Signal
 
 
 class Road:
-    """
-    Class representing a Road in an OpenDRIVE file.
+    """Class representing a Road in an OpenDRIVE file.
 
     Parameters
     ----------
@@ -38,10 +38,11 @@ class Road:
         resolution: float = 0.1,
         ignored_lane_types: Optional[Set[str]] = None,
     ):
+        """Road constructor."""
         self.road_xml = road_xml
         self.resolution = resolution
 
-        self.ignored_lane_types = set([]) if ignored_lane_types is None else ignored_lane_types
+        self.ignored_lane_types = set() if ignored_lane_types is None else ignored_lane_types
 
         # We'll store both successor and predecessor data as sometimes one of these
         # (maybe just successor?) will point to a junction rather than a road, so we
@@ -51,19 +52,18 @@ class Road:
 
     @cached_property
     def traffic_orientation(self) -> TrafficOrientation:
-        """
-        Get the traffic orientation (right/left-hand-drive) for this road.
+        """Get the traffic orientation (right/left-hand-drive) for this road.
 
         OpenDRIVE Spec Section 8: "The standard driving direction is defined by the
         value which is assigned to the @rule attribute (RHT=right-hand traffic,
         LHT=left-hand traffic)."
 
-        Returns
+        Returns:
         -------
         TrafficOrientation
             Traffic orientation enum for this road.
 
-        Raises
+        Raises:
         ------
         ValueError
             If an unknown OpenDRIVE traffic orientation string is found.
@@ -82,25 +82,27 @@ class Road:
         return traffic_orientation
 
     def __getitem__(self, name):
+        """Easier access to the XML attributes."""
         return self.road_xml.attrib[name]
 
     def __hash__(self):
+        """Calculates a hash based on the road ID."""
         return hash(self.id)
 
     def __repr__(self):
+        """Returns a printable representation of the road ID."""
         return f"Road_{self.id}"
 
     @cached_property
     def reference_line(self) -> np.ndarray:
-        """
-        Generate the road reference line according to the OpenDRIVE standard (7.1).
+        """Generate the road reference line according to the OpenDRIVE standard (7.1).
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Reference line at resolution self.resolution
 
-        Raises
+        Raises:
         ------
         NotImplementedError
             If a geometry is encountered which is not implemented.
@@ -118,6 +120,7 @@ class Road:
 
     @cached_property
     def reference_line_geometries(self) -> list[Geometry]:
+        """Returns all geometry segments within the centerline."""
         geometry_element_distances = []
         geometries: list[Geometry] = []
         for geometry in self.road_xml.findall("planView/geometry"):
@@ -171,29 +174,29 @@ class Road:
                 )
             elif geometry.find("paramPoly3") is not None:
                 poly3 = geometry.find("paramPoly3")
-                aU = float(poly3.attrib["aU"])
-                bU = float(poly3.attrib["bU"])
-                cU = float(poly3.attrib["cU"])
-                dU = float(poly3.attrib["dU"])
+                a_u = float(poly3.attrib["aU"])
+                b_u = float(poly3.attrib["bU"])
+                c_u = float(poly3.attrib["cU"])
+                d_u = float(poly3.attrib["dU"])
 
-                aV = float(poly3.attrib["aV"])
-                bV = float(poly3.attrib["bV"])
-                cV = float(poly3.attrib["cV"])
-                dV = float(poly3.attrib["dV"])
+                a_v = float(poly3.attrib["aV"])
+                b_v = float(poly3.attrib["bV"])
+                c_v = float(poly3.attrib["cV"])
+                d_v = float(poly3.attrib["dV"])
 
-                pRange = poly3.attrib.get("pRange", "normalized")
-                upper_p = 1.0 if pRange == "normalized" else length
+                p_range = poly3.attrib.get("pRange", "normalized")
+                upper_p = 1.0 if p_range == "normalized" else length
 
                 geometries.append(
                     ParamCubicPolynom(
-                        aU=aU,
-                        bU=bU,
-                        cU=cU,
-                        dU=dU,
-                        aV=aV,
-                        bV=bV,
-                        cV=cV,
-                        dV=dV,
+                        a_u=a_u,
+                        b_u=b_u,
+                        c_u=c_u,
+                        d_u=d_u,
+                        a_v=a_v,
+                        b_v=b_v,
+                        c_v=c_v,
+                        d_v=d_v,
                         x_offset=x_global_offset,
                         y_offset=y_global_offset,
                         heading_offset=heading_global_offset,
@@ -204,8 +207,8 @@ class Road:
                 spiral = geometry.find("spiral")
                 geometries.append(
                     Spiral(
-                        curvStart=float(spiral.attrib["curvStart"]),
-                        curvEnd=float(spiral.attrib["curvEnd"]),
+                        curv_start=float(spiral.attrib["curvStart"]),
+                        curv_end=float(spiral.attrib["curvEnd"]),
                         x_offset=x_global_offset,
                         y_offset=y_global_offset,
                         heading_offset=heading_global_offset,
@@ -217,19 +220,14 @@ class Road:
 
         geometry_element_distances = np.array(geometry_element_distances)
 
-        sorted_by_distance_indices = geometry_element_distances.argsort()
-        # self.geometries_sorted_by_distance = geometries[
-        #    sorted_by_distance_indices
-        # ]
-        # return self.geometries_sorted_by_distance
+        geometry_element_distances.argsort()
         return geometries
 
     @cached_property
     def lane_offset_line(self) -> np.ndarray:
-        """
-        Generate the lane offset line according to the OpenDRIVE standard (9.3).
+        """Generate the lane offset line according to the OpenDRIVE standard (9.3).
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Lane offset line at resolution self.resolution
@@ -270,12 +268,11 @@ class Road:
 
     @cached_property
     def z_coordinates(self) -> np.ndarray:
-        """
-        Generate the z coordinates of the reference line.
+        """Generate the z coordinates of the reference line.
 
         According to the OpenDRIVE standard (Road Elevation: 8.4.1).
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Z coordinate, one per coordinate in self.reference_line
@@ -319,8 +316,7 @@ class Road:
         return self["id"]
 
     def _link_lane_sections(self):
-        """
-        Connect all lane section objects within this road with their neighbours.
+        """Connect all lane section objects within this road with their neighbours.
 
         Neighbours == the lane section objects corresponding to their successors and
         predecessors. This method will be called as part of the "connection" tree of
@@ -439,7 +435,8 @@ class Road:
                 end_point = interpolate_point(end, end_idx)
                 sub_linestring.append(end_point)
 
-            assert len(sub_linestring) >= 2
+            if len(sub_linestring) < 2:
+                raise RuntimeError("sub linestring has less than two points")
             return np.array(sub_linestring)
 
         lane_section_tuples = []
@@ -472,10 +469,9 @@ class Road:
 
     @cached_property
     def lane_sections(self) -> List[LaneSection]:
-        """
-        Return an ordered (along the reference line) list of lane sections.
+        """Return an ordered (along the reference line) list of lane sections.
 
-        Returns
+        Returns:
         -------
         List[LaneSection]
             List of lane sections as they appear along the road reference line (in the
@@ -557,14 +553,13 @@ class Road:
 
     @property
     def signals(self) -> list[Signal]:
+        """Returns the signals associated to the road."""
         if (signals_node := self.road_xml.find("signals")) is not None:
             return [Signal.from_xml_node(sig_node) for sig_node in signals_node.findall("signal")]
         return []
 
     def get_coordinate_and_direction(self, s: float) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
-        """
-        At a given s, returns the orientation of the reference line, and the direction vector.
-        """
+        """At a given s, returns the orientation of the reference line, and the direction vector."""
         reference_line_direction_vectors = np.diff(self.reference_line, axis=0)
         reference_line_distances = np.cumsum(np.linalg.norm(reference_line_direction_vectors, axis=1))
         reference_line_distances = np.insert(reference_line_distances, 0, 0)
@@ -586,8 +581,7 @@ class Road:
         line_scale_factor: float = 1.0,
         label_size: Optional[int] = None,
     ) -> plt.Axes:
-        """
-        Plot a visualisation of this road on a provided axis object.
+        """Plot a visualisation of this road on a provided axis object.
 
         Parameters
         ----------
@@ -603,7 +597,7 @@ class Road:
             of the form "r_n" where n is the ID of this road. By default None, resulting
             in no labels.
 
-        Returns
+        Returns:
         -------
         plt.Axes
             Axis with the road plotted on it.

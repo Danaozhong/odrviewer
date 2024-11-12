@@ -1,3 +1,5 @@
+"""Apply QGIS rendering styles for the OpenDRIVE map."""
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from qgis.core import (
@@ -6,6 +8,7 @@ from qgis.core import (
     QgsMarkerLineSymbolLayer,
     QgsMarkerSymbol,
     QgsRendererCategory,
+    QgsRuleBasedRenderer,
     QgsSimpleFillSymbolLayer,
     QgsSimpleLineSymbolLayer,
     QgsSimpleMarkerSymbolLayer,
@@ -13,13 +16,18 @@ from qgis.core import (
     QgsSymbol,
     QgsVectorLayer,
     QgsWkbTypes,
-    QgsRuleBasedRenderer,
 )
 
 from odrviewer.model.qgis_odr_map import QGISOpenDriveMap
 
 
 def apply_qgis_styles(odr_map: QGISOpenDriveMap) -> None:
+    """Applies custom rendering configurations to the QGIS map layers.
+
+    Each layer receives a custom rendering to make inspection
+    more intuitive, such as pre-categorizing traffic signal types,
+    or boundary types (e.g. dashed white line).
+    """
     apply_road_reference_line_style(odr_map.reference_line_segments)
     apply_road_reference_line_style(odr_map.reference_lines)
     apply_road_reference_frame_style(odr_map.reference_frames)
@@ -29,21 +37,22 @@ def apply_qgis_styles(odr_map: QGISOpenDriveMap) -> None:
 
 
 def get_default_polygon_symbol_type() -> QgsSymbol:
+    """Returns the default QGIS symbol type for a polygon."""
     return QgsSymbol.defaultSymbol(QgsWkbTypes.geometryType(QgsWkbTypes.Polygon))
 
 
 def get_default_line_symbol_type() -> QgsSymbol:
+    """Returns the default QGIS symbol type for a line."""
     return QgsSymbol.defaultSymbol(QgsWkbTypes.geometryType(QgsWkbTypes.LineString))
 
 
 def get_default_point_symbol_type() -> QgsSymbol:
+    """Returns the default QGIS symbol type for a point."""
     return QgsSymbol.defaultSymbol(QgsWkbTypes.geometryType(QgsWkbTypes.Point))
 
 
 def apply_road_reference_frame_style(reference_frame_layer: QgsVectorLayer) -> None:
-    """
-    Applies a custom QGIS style for the reference frame vector layer.
-    """
+    """Applies a custom QGIS style for the reference frame vector layer."""
 
     def get_arrow_style(arrow_color: QColor) -> QgsSymbol:
         symbol = get_default_line_symbol_type()
@@ -76,9 +85,7 @@ def apply_road_reference_frame_style(reference_frame_layer: QgsVectorLayer) -> N
 
 
 def apply_road_reference_line_style(reference_line_layer: QgsVectorLayer) -> None:
-    """
-    Applies a custom QGIS style for the reference line vector layer.
-    """
+    """Applies a custom QGIS style for the reference line vector layer."""
 
     def get_arrow_style(arrow_color: QColor) -> QgsSymbol:
         symbol = get_default_line_symbol_type()
@@ -108,10 +115,7 @@ def apply_road_reference_line_style(reference_line_layer: QgsVectorLayer) -> Non
 
 
 def apply_lane_polygon_style(lane_polygon_layer: QgsVectorLayer) -> None:
-    """
-    Applies a standardized rendering to the QGIS lane polygon rendering.
-    The polygon is colored semi-transparent pink.
-    """
+    """Applies a standardized rendering to the QGIS lane polygon rendering."""
 
     def left_lane_style() -> QgsSymbol:
         symbol = get_default_polygon_symbol_type()
@@ -139,9 +143,7 @@ def apply_lane_polygon_style(lane_polygon_layer: QgsVectorLayer) -> None:
 
 
 def apply_transition_style(transition_layer: QgsVectorLayer) -> None:
-    """
-    Applies a custom QGIS style for the lane transition vector layer.
-    """
+    """Applies a custom QGIS style for the lane transition vector layer."""
 
     def get_transition_style() -> QgsSymbol:
         lane_color = QColor.fromRgb(200, 0, 0)
@@ -156,6 +158,8 @@ def apply_transition_style(transition_layer: QgsVectorLayer) -> None:
 
 
 def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
+    """Apply QGIS styling for the boundary geometries."""
+
     def unknown_sym() -> QgsSymbol:
         symbol = get_default_line_symbol_type()
         symbol_layer = QgsSimpleLineSymbolLayer()
@@ -266,9 +270,7 @@ def apply_boundary_style(boundary_layer: QgsVectorLayer) -> None:
 
 
 def apply_signal_layer_style(signal_point_layer: QgsVectorLayer) -> None:
-    """
-    Applies a standardized rendering to the QGIS signal layer.
-    """
+    """Applies a standardized rendering to the QGIS signal layer."""
 
     def get_speed_limit_sign_style() -> QgsSymbol:
         symbol = get_default_point_symbol_type()

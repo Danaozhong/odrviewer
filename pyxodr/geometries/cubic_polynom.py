@@ -1,3 +1,4 @@
+"""Functions to process OpenDRIVE cubic polynomials geometries."""
 from typing import Optional
 
 import numpy as np
@@ -7,8 +8,7 @@ from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
 
 
 class CubicPolynom(Geometry):
-    r"""
-    Class representing the Cubic polynom from the OpenDRIVE spec (depreciated).
+    r"""Class representing the Cubic polynomial from the OpenDRIVE spec (depreciated).
 
     $$y(x) = a + b*x + c*x2 + d*x^3$$
 
@@ -38,12 +38,12 @@ class CubicPolynom(Geometry):
         heading_offset: float = 0.0,
         length: Optional[float] = None,
     ):
+        """Creates a cubic polynomial OpenDRIVE geometry object."""
         Geometry.__init__(self, GeometryType.CUBIC_POLYNOM, x_offset, y_offset, heading_offset, length)
         self.a, self.b, self.c, self.d = a, b, c, d
 
     def __call__(self, p_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return local (p, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
+        r"""Return local (p, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
 
         (p, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -53,7 +53,7 @@ class CubicPolynom(Geometry):
         p_array : np.ndarray
             p values $\in [0.0, 1.0]$ to compute parametric coordinates.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (p, v) coordinate pairs.
@@ -62,33 +62,8 @@ class CubicPolynom(Geometry):
         local_coords = self.u_v_from_u(u_array)
         return local_coords
 
-        # u_array = p_array * self.length
-        # offsets = self.u_v_from_u(u_array)
-
-        # offsets = p(np.linspace(0.0, upper_p, num_samples))
-        # geometry_coordinates.append(
-        #    p.global_coords_from_offsets(
-        #        offsets,
-        #        x_global_offset,
-        #        y_global_offset,
-        #        heading_global_offset,
-        #    )
-        # )
-
-        # u_array = self._u_array_from_arc_lengths(s_array)
-        # local_coords = self.u_v_from_u(u_array)
-        # return local_coords
-        # if self.length is None:
-        #    raise NotImplementedError(
-        #        "Unable to parametrically call CubicPolynom when length is None"
-        #    )
-        # else:
-        ##    u_array = p_array * self.length
-        #    return self.u_v_from_u(u_array)
-
     def _du_ds_differential_equation(self, _: float, y: np.ndarray) -> np.ndarray:
-        r"""
-        Differential equation for use in the solving of u from s.
+        r"""Differential equation for use in the solving of u from s.
 
         Solves the equation
         $$\frac{du}{ds} = \frac{1}{\sqrt{1 + \left ( \frac{dv}{du} \right ) }}$$
@@ -103,21 +78,18 @@ class CubicPolynom(Geometry):
             Array of K 1D y values, [1, K]. Note y here refers to the
             scipy.integrate.solve_ivp spec; for our use case, y == u.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of dy /dt (for our purposes, du / ds) values, [1, K]
         """
-        # y : [1, K]
         y = y.T.squeeze()
-        # y : [K]
         dv_du = np.ones_like(y) * self.b + 2 * self.c * y + 3 * self.d * np.power(y, 2)
         result = np.power(np.ones_like(y) + np.power(dv_du, 2), -0.5)
         return result.T
 
     def _u_array_from_arc_lengths(self, s_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return an array of u (local coord) from s (distance along geometry).
+        r"""Return an array of u (local coord) from s (distance along geometry).
 
         Required as OpenDRIVE provides a length value for road reference lines (i.e.
         a max s value) but the cubic polynomial geometry is parameterised by u (see
@@ -135,12 +107,13 @@ class CubicPolynom(Geometry):
         s_array : np.ndarray
             Array of distances along the polynomial curve.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of u values corresponding to these distances.
         """
-        assert min(s_array) == 0.0
+        if min(s_array) != 0.0:
+            raise ValueError(f"s_array contains negative values: {s_array}")
         solution = solve_ivp(
             self._du_ds_differential_equation,
             (0.0, max(s_array)),
@@ -148,36 +121,13 @@ class CubicPolynom(Geometry):
             t_eval=s_array,
             vectorized=True,
         )
-        assert (s_array == solution.t).all()
+        if not (s_array == solution.t).all():
+            raise RuntimeError("failed to solve the differential equation")
         u_array = solution.y.squeeze()
         return u_array
 
-    def u_v_from_arc_length(self, s_array: np.ndarray) -> np.ndarray:
-        """
-        Return local (u, v) coordinates from an array of s values (arc lengths).
-
-        (u, v) coordinates are in their own x,y frame: start at origin, and initial
-        heading is along the x axis.
-
-        Parameters
-        ----------
-        s_array : np.ndarray
-            s values corresponding to length along cubic polynomial line.
-
-        Returns
-        -------
-        np.ndarray
-            Array of local (u, v) coordinate pairs.
-
-            TODO delete this function
-        """
-        u_array = self._u_array_from_arc_lengths(s_array)
-        local_coords = self.u_v_from_u(u_array)
-        return local_coords
-
     def u_v_from_p(self, p_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return local (p, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
+        r"""Return local (p, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
 
         (p, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -187,7 +137,7 @@ class CubicPolynom(Geometry):
         p_array : np.ndarray
             p values $\in [0.0, 1.0]$ to compute parametric coordinates.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (p, v) coordinate pairs.
@@ -196,8 +146,7 @@ class CubicPolynom(Geometry):
         return self.u_v_from_u(u_array)
 
     def u_v_from_u(self, u_array: np.ndarray) -> np.ndarray:
-        """
-        Return local (u, v) coordinates from an array of local u coordinates.
+        """Return local (u, v) coordinates from an array of local u coordinates.
 
         (u, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -207,7 +156,7 @@ class CubicPolynom(Geometry):
         u_array : np.ndarray
             u values from which to compute v values.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (u, v) coordinate pairs.
@@ -224,62 +173,58 @@ class CubicPolynom(Geometry):
         return local_coords
 
     def __str__(self) -> str:
+        """Returns a string representation of a cubic polynomial."""
         return f"a={self.a}, b={self.b}, c={self.c}, d={self.d}"
 
 
 class ParamCubicPolynom(Geometry):
-    """
-    Class representing the parametric cubic curve from the OpenDRIVE spec.
+    """Class representing the parametric cubic curve from the OpenDRIVE spec.
 
     Parameters
     ----------
-    aU : float
+    a_u : float
         a parameter for the U curve.
-    bU : float
+    b_u : float
         b parameter for the U curve.
-    cU : float
+    c_u : float
         c parameter for the U curve.
-    dU : float
+    d_u : float
         d parameter for the U curve.
-    aV : float
+    a_v : float
         a parameter for the V curve.
-    bV : float
+    b_v : float
         b parameter for the V curve.
-    cV : float
+    c_v : float
         c parameter for the V curve.
-    dV : float
+    d_v : float
         d parameter for the V curve.
     """
 
     def __init__(
         self,
-        aU: float,
-        bU: float,
-        cU: float,
-        dU: float,
-        aV: float,
-        bV: float,
-        cV: float,
-        dV: float,
+        a_u: float,
+        b_u: float,
+        c_u: float,
+        d_u: float,
+        a_v: float,
+        b_v: float,
+        c_v: float,
+        d_v: float,
         x_offset: float = 0.0,
         y_offset: float = 0.0,
         heading_offset: float = 0.0,
         length: Optional[float] = None,
-        curvature: Optional[float] = None,
     ):
+        """Creates a cubic polynomial in u and v directions."""
         Geometry.__init__(self, GeometryType.PARAMERTRIC_CUBIC_CURVE, x_offset, y_offset, heading_offset, length)
         # From the OpenDRIVE spec (7.7.1) we can use the call function from the
-        # CubicPolynom class above but parameterised over the range [0,1]. We can
+        # CubicPolynom class above but parameterized over the range [0,1]. We can
         # achieve this by setting the length of these curves to 1.0.
-        actualLength = 1.0
-        if length is not None:
-            actualLength = length
-        self.pU = CubicPolynom(aU, bU, cU, dU, length=1.0)
-        self.pV = CubicPolynom(aV, bV, cV, dV, length=1.0)
+        self.p_u = CubicPolynom(a_u, b_u, c_u, d_u, length=1.0)
+        self.p_v = CubicPolynom(a_v, b_v, c_v, d_v, length=1.0)
 
     def __call__(self, p_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
+        r"""Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
 
         (u, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -289,13 +234,13 @@ class ParamCubicPolynom(Geometry):
         p_array : np.ndarray
             p values $\in [0.0, 1.0]$ to compute parametric coordinates.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (u, v) coordinate pairs.
         """
-        u_array = self.pU.u_v_from_p(p_array)[:, 1]
-        v_array = self.pV.u_v_from_p(p_array)[:, 1]
+        u_array = self.p_u.u_v_from_p(p_array)[:, 1]
+        v_array = self.p_v.u_v_from_p(p_array)[:, 1]
 
         local_coords = np.stack((u_array, v_array), axis=1)
         return local_coords
@@ -305,4 +250,5 @@ class ParamCubicPolynom(Geometry):
         raise NotImplementedError("This geometry is only defined parametrically.")
 
     def __str__(self) -> str:
-        return f"pU=[{str(self.pU)}], pV=[{str(self.pV)}]"
+        """string-readable export of the polynomial."""
+        return f"pU=[{str(self.p_u)}], pV=[{str(self.p_v)}]"

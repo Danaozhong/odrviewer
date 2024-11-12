@@ -1,11 +1,11 @@
+"""Functions to process OpenDRIVE arc geometries."""
 import numpy as np
 
 from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
 
 
 class Arc(Geometry):
-    """
-    Class representing an arc - a line with constant curvature.
+    """Class representing an arc - a line with constant curvature.
 
     Parameters
     ----------
@@ -16,12 +16,12 @@ class Arc(Geometry):
     """
 
     def __init__(self, x_offset: float, y_offset: float, heading_offset: float, length: float, curvature: float):
+        """Constructor."""
         Geometry.__init__(self, GeometryType.ARC, x_offset, y_offset, heading_offset, length)
         self.curvature = curvature
 
     def __call__(self, p_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return local (p, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
+        r"""Return local (p, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
 
         (p, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -31,7 +31,7 @@ class Arc(Geometry):
         p_array : np.ndarray
             p values $\in [0.0, 1.0]$ to compute parametric coordinates.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (p, v) coordinate pairs.
@@ -65,4 +65,5 @@ class Arc(Geometry):
         raise NotImplementedError("This geometry is only defined parametrically.")
 
     def __str__(self) -> str:
+        """Human-readable representation of the arc geometry."""
         return f"curvature={self.curvature}"

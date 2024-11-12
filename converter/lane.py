@@ -1,14 +1,13 @@
+"""Converts an OpenDRIVE lane to a QGIS lane."""
 import numpy as np
-import shapely
 from qgis.core import QgsFeature
-from shapely import Polygon, LineString
+from shapely import LineString, Polygon
 
 from odrviewer.converter.basic_types import LaneSide
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
-from odrviewer.model.qgis_odr_map import get_lanes_fields, get_boundary_fields
+from odrviewer.model.qgis_odr_map import get_boundary_fields, get_lanes_fields
 from odrviewer.pyxodr.road_objects.road import Road
-import shapely.ops
 
 
 def create_lane_feature(
@@ -22,6 +21,7 @@ def create_lane_feature(
     inner_boundary,
     outer_boundary,
 ) -> QgsFeature:
+    """Creates a QGIS vector layer feature from an OpenDRIVE lane."""
     lane_polygon = Polygon(np.vstack((inner_boundary, np.flip(outer_boundary, axis=0))))
     wgs84_polygon = transformer.translate_odr_geometry(lane_polygon)
     lane_poly_feature = QgsFeature(get_lanes_fields())
@@ -38,6 +38,7 @@ def create_lane_feature(
 
 
 def convert_lanes(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
+    """Converts all lanes of a OpenDRIVE road."""
     lane_polygons: list[QgsFeature] = []
     for lane_section in road.lane_sections:
         # start processing the left lanes, if present
@@ -85,6 +86,7 @@ def convert_lanes(road: Road, transformer: GlobalTransformer) -> list[QgsFeature
 
 
 def convert_road_markings(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
+    """Coverts all road markings (boundaries such as painted dashed lines into QGIS features."""
     road_markings: list[QgsFeature] = []
 
     for lane_section in road.lane_sections:

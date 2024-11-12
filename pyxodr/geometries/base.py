@@ -1,3 +1,7 @@
+"""Functions to process the basic attributes of every OpenDRIVE geometry.
+
+These include x and y offsets, heading offset and a length parameter.
+"""
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional
@@ -8,6 +12,8 @@ from odrviewer.pyxodr.utils.array import fix_zero_directions
 
 
 class GeometryType(Enum):
+    """Enumeration for the geometry types supported in OpenDRIVE."""
+
     ARC = 0
     LINE = 1
     POLYNOMINAL = 2
@@ -27,6 +33,13 @@ class Geometry(ABC):
         heading_offset: float,
         length: Optional[float] = None,
     ):
+        """Constructs the base geometry with all parameters shared in the base geometry.
+
+        These are:
+        - x/y offsets
+        - heading offset
+        - length (if not normalized)
+        """
         self.geometry_type = geometry_type
         self.x_offset = x_offset
         self.y_offset = y_offset
@@ -42,8 +55,7 @@ class Geometry(ABC):
         y_offset: float,
         heading_offset: float,
     ) -> np.ndarray:
-        """
-        Apply x and y (translation) and heading (rotation) offsets to local coords.
+        """Apply x and y (translation) and heading (rotation) offsets to local coords.
 
         Thereby generating coords in the global frame from coords in the local frame.
         N = number of coordinates
@@ -60,7 +72,7 @@ class Geometry(ABC):
         heading_offset : float
             Heading value (in radians) to rotate all local coordinates by.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Resultant coordinates in the global frame.
@@ -74,7 +86,11 @@ class Geometry(ABC):
 
         return global_coords
 
-    def evaluate_geometry(self, resolution: float):
+    def evaluate_geometry(self, resolution: float) -> np.ndarray:
+        """Evaluates a geometry by interpolating the formula of the geometry shape by actual x/y shape points.
+
+        The resolution specifies the distance along u, on which to create a shape point.
+        """
         num_samples = max(int(self.length / resolution), 2)
 
         offsets = self(np.linspace(0.0, self.length, num_samples))
@@ -91,8 +107,7 @@ class Geometry(ABC):
         reference_line_direction_vectors: np.ndarray,
         direction: str = "right",
     ) -> np.ndarray:
-        """
-        Compute offset vectors from line direction vectors & offset magnitudes.
+        """Compute offset vectors from line direction vectors & offset magnitudes.
 
         Consider a line made up of a series of xy coordinates. This method is for
         computing a line "alongside" it but offset from it.
@@ -110,13 +125,13 @@ class Geometry(ABC):
             In which direction the offsets should point from the reference line,
             assuming facing in the direction of the reference line, by default "right"
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of offset vectors. Add these to the original reference line
             coordinates to get the resultant offset coordinates, [N, 2]
 
-        Raises
+        Raises:
         ------
         ValueError
             If the specified direction is not supported.
@@ -141,18 +156,17 @@ class Geometry(ABC):
         # replace any all-zero rows
         perpendicular_directions = fix_zero_directions(perpendicular_directions)
         # Unit scale
-        scaled_perpendicular_directions_T = perpendicular_directions.T / np.linalg.norm(
+        scaled_perpendicular_directions_t = perpendicular_directions.T / np.linalg.norm(
             perpendicular_directions, axis=1
         )
 
-        offsets = (local_offsets * scaled_perpendicular_directions_T).T
+        offsets = (local_offsets * scaled_perpendicular_directions_t).T
 
         return offsets
 
     @abstractmethod
     def __call__(self, p_array: np.ndarray) -> np.ndarray:
-        r"""
-        Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
+        r"""Return local (u, v) coordinates from an array of parameter $p \in [0.0, 1.0]$.
 
         (u, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -162,7 +176,7 @@ class Geometry(ABC):
         p_array : np.ndarray
             p values $\in [0.0, 1.0]$ to compute parametric coordinates.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (u, v) coordinate pairs.
@@ -171,8 +185,7 @@ class Geometry(ABC):
 
     @abstractmethod
     def u_v_from_u(self, u_array: np.ndarray) -> np.ndarray:
-        """
-        Return local (u, v) coordinates from an array of local u coordinates.
+        """Return local (u, v) coordinates from an array of local u coordinates.
 
         (u, v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along the x axis.
@@ -182,7 +195,7 @@ class Geometry(ABC):
         u_array : np.ndarray
             u values from which to compute v values.
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (u, v) coordinate pairs.
@@ -194,6 +207,7 @@ class NullGeometry(Geometry):
     """Class for a "null geometry" which always returns zeros for local coords."""
 
     def __init__(self, *args, **kwargs):
+        """Constructor."""
         pass
 
     def __call__(self, p_array: np.ndarray) -> np.ndarray:

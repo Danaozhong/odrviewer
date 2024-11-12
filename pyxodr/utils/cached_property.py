@@ -1,3 +1,5 @@
+"""A function to cache properties."""
+
 try:
     from functools import cached_property
 except ImportError:
@@ -7,7 +9,7 @@ except ImportError:
         """Redefine functools' cached_property decorator for Python <=3.7."""
 
         @property
-        @lru_cache()
+        @lru_cache
         def cached_func(*args, **kwargs):
             return func(*args, **kwargs)
 

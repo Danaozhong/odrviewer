@@ -1,14 +1,14 @@
+"""Contains classes and functions to store multiple geometries (line, arc, spiral) combined together."""
 from copy import deepcopy
 from typing import List
 
 import numpy as np
 
-from odrviewer.pyxodr.geometries.base import Geometry, GeometryType, NullGeometry
+from odrviewer.pyxodr.geometries.base import Geometry, NullGeometry
 
 
 class MultiGeom:
-    """
-    Class representing sequential geometry objects.
+    """Class representing sequential geometry objects.
 
     Parameters
     ----------
@@ -19,6 +19,7 @@ class MultiGeom:
     """
 
     def __init__(self, geometries: List[Geometry], distance_array: np.ndarray):
+        """Constructs a multi geometry from individual geometry objects."""
         self.distance_array = distance_array
         self.geometries = geometries
 
@@ -28,8 +29,7 @@ class MultiGeom:
             raise IndexError("Geometry and distance arrays are empty.")
 
     def __call__(self, u_array: np.ndarray) -> np.ndarray:
-        """
-        Return local (u, v) coordinates from a array of parameter u.
+        """Return local (u, v) coordinates from a array of parameter u.
 
         (u,v) coordinates are in their own x,y frame: start at origin, and initial
         heading is along x axis.
@@ -42,7 +42,7 @@ class MultiGeom:
         u_array : np.ndarray
             Local u coordinates
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Array of local (u, v) coordinate pairs
@@ -53,11 +53,11 @@ class MultiGeom:
         # exceeded
         geometry_indices = (
             np.argmax(
-                np.tile(
+                u_array
+                < np.tile(
                     np.concatenate((self.distance_array, np.array([np.inf]))),
                     (len(u_array), 1),
-                ).T
-                > u_array,
+                ).T,
                 axis=0,
             )
             - 1
@@ -86,8 +86,7 @@ class MultiGeom:
         s_start=0.0,
         s_end=None,
     ) -> np.ndarray:
-        """
-        Compute global coordinates of this multi geometry, given a reference line.
+        """Compute global coordinates of this multi geometry, given a reference line.
 
         Parameters
         ----------
@@ -115,7 +114,7 @@ class MultiGeom:
             In which direction the offsets should point from the reference line,
             assuming facing in the direction of the reference line, by default "right"
 
-        Returns
+        Returns:
         -------
         np.ndarray
             Global coordinates of the multi-geometry.
@@ -207,7 +206,8 @@ class MultiGeom:
         global_coordinates = np.vstack(global_coordinates)
         all_local_offsets = np.concatenate(all_local_offsets)
 
-        assert len(all_local_offsets) == (filter_end_index - filter_start_index)
-        if s_start == 0 and s_end is None:
-            assert len(all_local_offsets) == len(reference_line)
+        if len(all_local_offsets) != (filter_end_index - filter_start_index):
+            raise AssertionError("array length mismatch")
+        if s_start == 0 and s_end is None and len(all_local_offsets) != len(reference_line):
+            raise AssertionError("array length mismatch")
         return global_coordinates, all_local_offsets

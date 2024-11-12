@@ -1,8 +1,8 @@
+"""A module to store curved text. Should be deleted."""
+
 import math
 
 import numpy as np
-from matplotlib import patches
-from matplotlib import pyplot as plt
 from matplotlib import text as mtext
 
 # NOTE: this code is taken verbatim from this stack overflow answer:
@@ -10,12 +10,11 @@ from matplotlib import text as mtext
 
 
 class CurvedText(mtext.Text):
-    """
-    A text object that follows an arbitrary curve.
-    """
+    """A text object that follows an arbitrary curve."""
 
     def __init__(self, x, y, text, axes, **kwargs):
-        super(CurvedText, self).__init__(x[0], y[0], " ", **kwargs)
+        """Constructor."""
+        super().__init__(x[0], y[0], " ", **kwargs)
 
         axes.add_artist(self)
 
@@ -45,24 +44,22 @@ class CurvedText(mtext.Text):
     ##overloading some member functions, to assure correct functionality
     ##on update
     def set_zorder(self, zorder):
-        super(CurvedText, self).set_zorder(zorder)
+        """Sets the z order."""
+        super().set_zorder(zorder)
         self.__zorder = self.get_zorder()
-        for c, t in self.__Characters:
+        for _c, t in self.__Characters:
             t.set_zorder(self.__zorder + 1)
 
     def draw(self, renderer, *args, **kwargs):
-        """
-        Overload of the Text.draw() function. Do not do
-        do any drawing, but update the positions and rotation
+        """Overload of the Text.draw() function.
+
+        Does not do any drawing, but update the positions and rotation
         angles of self.__Characters.
         """
         self.update_positions(renderer)
 
     def update_positions(self, renderer):
-        """
-        Update positions and rotations of the individual text elements.
-        """
-
+        """Update positions and rotations of the individual text elements."""
         # preparations
 
         ##determining the aspect ratio:
@@ -72,15 +69,15 @@ class CurvedText(mtext.Text):
         xlim = self.axes.get_xlim()
         ylim = self.axes.get_ylim()
         ## Axis size on figure
-        figW, figH = self.axes.get_figure().get_size_inches()
+        fig_w, fig_h = self.axes.get_figure().get_size_inches()
         ## Ratio of display units
         _, _, w, h = self.axes.get_position().bounds
         ##final aspect ratio
-        aspect = ((figW * w) / (figH * h)) * (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
+        aspect = ((fig_w * w) / (fig_h * h)) * (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
 
         # points of the curve in figure coordinates:
         x_fig, y_fig = (
-            np.array(l) for l in zip(*self.axes.transData.transform([(i, j) for i, j in zip(self.__x, self.__y)]))
+            np.array(l_coords) for l_coords in zip(*self.axes.transData.transform(list(zip(self.__x, self.__y))))
         )
 
         # point distances in figure coordinates

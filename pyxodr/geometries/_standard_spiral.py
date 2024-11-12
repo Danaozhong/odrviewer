@@ -1,3 +1,4 @@
+"""Helper functions to process spirals."""
 import math
 from typing import Tuple
 
@@ -100,8 +101,7 @@ gd = [
 
 
 class OdrSpiral:
-    """
-    Class representing a standard Euler spiral, starting with a curvature of 0.
+    """Class representing a standard Euler spiral, starting with a curvature of 0.
 
     Parameters
     ----------
@@ -156,15 +156,14 @@ class OdrSpiral:
         return (ss, cc)
 
     def __call__(self, s: float) -> Tuple[float, float, float]:
-        """
-        Compute the (x, y, t) coordinate of the spiral for length along spiral s.
+        """Compute the (x, y, t) coordinate of the spiral for length along spiral s.
 
         Parameters
         ----------
         s : float
             Run-length along the spiral.
 
-        Returns
+        Returns:
         -------
         Tuple[float, float, float]
             (

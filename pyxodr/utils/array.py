@@ -1,10 +1,11 @@
+"""This file contains helper functions for arrays."""
+
 import numpy as np
 from scipy.interpolate import interp1d
 
 
 def fix_zero_directions(dirs: np.ndarray) -> np.ndarray:
-    """
-    Fix any zero rows by filling with adjacent elements.
+    """Fix any zero rows by filling with adjacent elements.
 
     Cycles through the array replacing any zero rows by
     non-zero adjacent rows if they are there. Stops
@@ -41,16 +42,15 @@ def fix_zero_directions(dirs: np.ndarray) -> np.ndarray:
     return dirs
 
 
-def interpolate_path(X: np.ndarray, resolution: float = 0.1) -> np.ndarray:
+def interpolate_path(path_vertices: np.ndarray, resolution: float = 0.1) -> np.ndarray:
     """Interpolate a path at the given resolution."""
-
     # Remove duplicated points
-    _, idxs = np.unique(X, axis=0, return_index=True)
-    X = X[sorted(idxs)]
-    ss = np.hstack([[0.0], np.linalg.norm(np.diff(X, axis=0), axis=1).cumsum()])
+    _, idxs = np.unique(path_vertices, axis=0, return_index=True)
+    path_vertices = path_vertices[sorted(idxs)]
+    ss = np.hstack([[0.0], np.linalg.norm(np.diff(path_vertices, axis=0), axis=1).cumsum()])
     interp_func = interp1d(
         ss,
-        X,
+        path_vertices,
         axis=0,
         fill_value="extrapolate",
     )
@@ -58,5 +58,4 @@ def interpolate_path(X: np.ndarray, resolution: float = 0.1) -> np.ndarray:
     new_distance = np.arange(0, ss[-1], resolution)
     if len(new_distance) < 2:
         new_distance = np.array([0.0, ss[-1]])
-    # return interp_func(np.linspace(0.0, ss[-1], int(np.round(ss[-1] / resolution))))
     return interp_func(new_distance)
