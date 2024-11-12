@@ -1,32 +1,30 @@
-# This file contains metadata for your plugin.
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=OpenDRIVE Map Viewer
-qgisMinimumVersion=3.0
-description=A Plugin to visualize OpenDRIVE maps.
+qgisMinimumVersion=3.38
+description=This plugin adds support to visualize OpenDRIVE maps to QGIS.
 version=0.0.1
 author=Clemens Zangl
-email=
-about=A Viewer for OpenDRIVE
-tracker=
-repository=
+email=clemens.zangl@gmail.com
+about=This plugin is a viewer that supports visualization of OpenDRIVE maps.
+    It has been developed using OpenDRIVE 1.8.1.
+    Some code has been taken from https://github.com/driskai/pyxodr published under the MIT license.
+tracker=https://github.com/Danaozhong/odrviewer/issues
+repository=https://github.com/Danaozhong/odrviewer
 # End of mandatory metadata
 
 # Recommended items:
-
-hasProcessingProvider=no
+hasProcessingProvider=false
 # Uncomment the following line and add your changelog:
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=OpenDRIVE,ADAS,Automotive
 
-homepage=http://homepage
+homepage=http://clemenszangl.de
 category=Database
 icon=icon.png
 # experimental flag
-experimental=False
+experimental=True
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
@@ -37,7 +35,7 @@ deprecated=False
 # plugin_dependencies=db_manager
 
 Category of the plugin: Raster, Vector, Database or Web
-# category=
+category=Vector
 
 # If the plugin can run on QGIS Server.
 server=False
