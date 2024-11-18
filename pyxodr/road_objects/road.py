@@ -1,7 +1,6 @@
 """Stores functions to process OpenDRIVE roads."""
 from typing import Dict, List, Optional, Set, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from lxml import etree
@@ -14,7 +13,6 @@ from odrviewer.pyxodr.road_objects.lane_section import LaneSection
 from odrviewer.pyxodr.signals.signal import Signal
 from odrviewer.pyxodr.utils import cached_property
 from odrviewer.pyxodr.utils.array import interpolate_path
-from odrviewer.pyxodr.utils.curved_text import CurvedText
 
 
 class Road:
@@ -573,80 +571,3 @@ class Road:
         if dir_index == len(self.reference_line) - 1:
             dir_index -= 1
         return self.reference_line[s_index], reference_line_direction_vectors[dir_index]
-
-    def plot(
-        self,
-        axis: plt.Axes,
-        plot_start_and_end: bool = False,
-        line_scale_factor: float = 1.0,
-        label_size: Optional[int] = None,
-    ) -> plt.Axes:
-        """Plot a visualisation of this road on a provided axis object.
-
-        Parameters
-        ----------
-        axis : plt.Axes
-            Axis on which to plot the road network.
-        plot_start_and_end : bool, optional
-            If True, plot both the start and end of roads (start with green dot, end
-            with red cross), by default False
-        line_scale_factor : float, optional
-            Scale all lines thicknesses up by this factor, by default 1.0.
-        label_size : int, optional
-            If specified, text of this font size will be displayed along the road line
-            of the form "r_n" where n is the ID of this road. By default None, resulting
-            in no labels.
-
-        Returns:
-        -------
-        plt.Axes
-            Axis with the road plotted on it.
-        """
-        # Plot the road reference line.
-        global_coords = self.reference_line
-        global_coords_len = len(global_coords)
-        axis.plot(*global_coords.T, linewidth=0.05 * line_scale_factor)
-        if label_size is not None:
-            x, y = global_coords[int(len(global_coords) // 2) - 1 :].T
-            CurvedText(
-                x=x,
-                y=y,
-                text=f"r_{self.id}",
-                va="bottom",
-                axes=axis,
-                fontsize=3,
-            )
-        if plot_start_and_end:
-            axis.scatter([global_coords[0][0]], [global_coords[0][1]], marker="o", c="green", s=4)
-            axis.scatter([global_coords[-1][0]], [global_coords[-1][1]], marker="x", c="red", s=4)
-        # Plot the road line directions
-        origin_coordinate = global_coords[global_coords_len // 2]
-        try:
-            arrow_difference_vector = global_coords[global_coords_len // 2 + 1] - origin_coordinate
-            axis.arrow(
-                *origin_coordinate,
-                *arrow_difference_vector,
-                shape="full",
-                lw=0.5,
-                length_includes_head=True,
-                head_width=0.5,
-            )
-        except IndexError as e:
-            print(
-                str(e)
-                + " - this is likely caused by a road which is too short. "
-                + "A direction arrow will not be printed for this road "
-                + f"({self})."
-                + "\nIf you're seeing lots of these errors, try a smaller "
-                + "(finer) resolution."
-            )
-
-        # Plot the road offset line.
-        axis.plot(
-            *self.lane_offset_line.T,
-            "-",
-            label=f"{self}",
-            linewidth=0.2 * line_scale_factor,
-        )
-
-        return axis

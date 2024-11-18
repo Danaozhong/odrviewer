@@ -13,6 +13,15 @@ To run, extract the Python package to your QGIS Python plug-in directory.
 For example, on Windows:
 `C:\Users\<user>\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins`
 
+### Dependency Installation
+
+This QGIS plugin requires `numpy`, `shapely`, and `scipy` to be installed in QGIS. If these dependencies are not installed, you will face error messages during startup.
+
+To install these dependencies, you can either use the `qpip` plugin to install the dependencies automatically, or use `pip` of the QGIS installation.
+
+For Windows:
+`<QGIS_DIR>\python-qgis.bat -m pip install -r <HOME>\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\odrviewer\requirements.txt`
+
 
 ## Open a Map
 

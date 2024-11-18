@@ -1,8 +1,8 @@
 """This file contains all enumeration types specified in OpenDRIVE."""
-from enum import StrEnum
+from enum import Enum
 
 
-class RoadMarkColor(StrEnum):
+class RoadMarkColor(str, Enum):
     """Enumeration for the color of road markings."""
 
     INVALID = "invalid"
@@ -17,7 +17,7 @@ class RoadMarkColor(StrEnum):
     YELLOW = "yellow"
 
 
-class RoadMarkType(StrEnum):
+class RoadMarkType(str, Enum):
     """Enumeration for road marking types."""
 
     INVALID = "invalid"
@@ -35,7 +35,7 @@ class RoadMarkType(StrEnum):
     SOLID = "solid"
 
 
-class LaneChange(StrEnum):
+class LaneChange(str, Enum):
     """Enumeration for lane change types."""
 
     INVALID = "invalid"
@@ -45,7 +45,7 @@ class LaneChange(StrEnum):
     NONE = "none"
 
 
-class Orientation(StrEnum):
+class Orientation(str, Enum):
     """Enumeration for orientation (relative to something else)."""
 
     PLUS = "+"
@@ -53,7 +53,7 @@ class Orientation(StrEnum):
     NONE = "none"
 
 
-class UnitDistance(StrEnum):
+class UnitDistance(str, Enum):
     """Enumeration for distance units."""
 
     FOOT = "ft"
@@ -62,7 +62,7 @@ class UnitDistance(StrEnum):
     MILE = "mile"
 
 
-class UnitSpeed(StrEnum):
+class UnitSpeed(str, Enum):
     """Enumeration for speed units."""
 
     KM_PER_HOUR = "km/h"
@@ -70,14 +70,14 @@ class UnitSpeed(StrEnum):
     MILES_PER_HOUR = "mph"
 
 
-class UnitMass(StrEnum):
+class UnitMass(str, Enum):
     """Enumeration for mass units."""
 
     KILOGRAM = "kg"
     TON = "t"
 
 
-class UnitSlope(StrEnum):
+class UnitSlope(str, Enum):
     """Enumeration for slope units."""
 
     PERCENT = "%"
@@ -86,7 +86,7 @@ class UnitSlope(StrEnum):
 CountryCode = str
 
 
-class Unit(StrEnum):
+class Unit(str, Enum):
     """An enumeration of all units (speed, distance, slope, mass)."""
 
     FOOT = "ft"
