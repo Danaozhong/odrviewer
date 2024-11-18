@@ -5,8 +5,13 @@ description=This plugin adds support to visualize OpenDRIVE maps to QGIS.
 version=0.0.1
 author=Clemens Zangl
 email=clemens.zangl@gmail.com
-about=This plugin is a viewer that supports visualization of OpenDRIVE maps.
-    It has been developed using OpenDRIVE 1.8.1.
+about=This plugin is a viewer that supports visualization of OpenDRIVE map files (*.xodr).
+    It has been developed using the OpenDRIVE 1.8.1 specification.
+
+    This QGIS plugin requires several Python dependencies to be installed.
+    Refer to https://github.com/Danaozhong/odrviewer for instructions on how
+    to install them.
+
     Some code has been taken from https://github.com/driskai/pyxodr published under the MIT license.
 tracker=https://github.com/Danaozhong/odrviewer/issues
 repository=https://github.com/Danaozhong/odrviewer
@@ -20,7 +25,6 @@ hasProcessingProvider=false
 # Tags are comma separated with spaces allowed
 tags=OpenDRIVE,ADAS,Automotive
 
-homepage=http://clemenszangl.de
 # experimental flag
 experimental=true
 
