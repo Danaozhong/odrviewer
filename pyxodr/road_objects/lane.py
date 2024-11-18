@@ -9,13 +9,12 @@ try:
 except ImportError:
     from typing_extensions import Literal
 
-import matplotlib.pyplot as plt
 import numpy as np
 from lxml import etree
 
 from odrviewer.pyxodr.enumerations import LaneChange, RoadMarkColor, RoadMarkType
 from odrviewer.pyxodr.geometries import CubicPolynom, MultiGeom
-from odrviewer.pyxodr.utils import CurvedText, cached_property
+from odrviewer.pyxodr.utils import cached_property
 
 
 class LaneOrientation(Enum):
@@ -376,105 +375,3 @@ class Lane:
                 )
             )
         return sorted(road_marks, key=lambda x: x.s_offset)
-
-    def plot(
-        self,
-        axis: plt.Axes,
-        plot_start_and_end: bool = False,
-        line_scale_factor: float = 1.0,
-        label_size: int | None = None,
-    ) -> plt.Axes:
-        """Plot a visualisation of lane on a provided axis object.
-
-        Parameters
-        ----------
-        axis : plt.Axes
-            Axis on which to plot the lane.
-        plot_start_and_end : bool, optional
-            If True, plot both the start and end of this lane (start with blue dot,
-            end with pink cross), by default False
-        line_scale_factor : float, optional
-            Scale all lines thicknesses up by this factor, by default 1.0.
-        label_size : int, optional
-            If specified, text of this font size will be displayed along the lane centre
-            line of the form "l_n_s_m" where n is the ID of this lane, m is the id of
-            the lane section. By default None, resulting in no labels.
-
-        Returns:
-        -------
-        plt.Axes
-            Axis with the lane plotted on it.
-        """
-        lane_traffic_flow_line = self.traffic_flow_line[:, :2]
-        axis.plot(
-            *lane_traffic_flow_line.T,
-            "--",
-            linewidth=0.2 * line_scale_factor,
-            color="grey",
-            alpha=0.8,
-        )
-        if label_size is not None:
-            x, y = lane_traffic_flow_line.T
-            CurvedText(
-                x=x,
-                y=y,
-                text=f"l_{self.id}_s_{self.lane_section_id}",
-                va="bottom",
-                axes=axis,
-                fontsize=3,
-            )
-
-        if plot_start_and_end:
-            axis.scatter(
-                [lane_traffic_flow_line[0][0]],
-                [lane_traffic_flow_line[0][1]],
-                marker="o",
-                c="blue",
-                s=4,
-            )
-            axis.scatter(
-                [lane_traffic_flow_line[-1][0]],
-                [lane_traffic_flow_line[-1][1]],
-                marker="x",
-                c="pink",
-                s=4,
-            )
-
-        # Always plot lane directions
-        origin_coordinate = lane_traffic_flow_line[len(lane_traffic_flow_line) // 2]
-        try:
-            arrow_difference_vector = lane_traffic_flow_line[len(lane_traffic_flow_line) // 2 + 1] - origin_coordinate
-            axis.arrow(
-                *origin_coordinate,
-                *arrow_difference_vector,
-                shape="full",
-                lw=0.5,
-                length_includes_head=True,
-                head_width=0.5,
-            )
-        except IndexError as e:
-            print(
-                str(e)
-                + " - this is likely caused by a lane which is too "
-                + "short. A direction arrow will not be printed for "
-                + f"{self}."
-                + "\nIf you're seeing lots of these errors, try a "
-                + "smaller (finer) resolution."
-            )
-
-        # And always plot lane connections
-        for successor_lane in self.traffic_flow_successors:
-            origin_coordinate = lane_traffic_flow_line[-1]
-            # Skip 0 as they may be on top of each other
-            arrow_difference_vector = successor_lane.traffic_flow_line[1, :2] - origin_coordinate
-            axis.arrow(
-                *origin_coordinate,
-                *arrow_difference_vector,
-                shape="full",
-                lw=0.5,
-                length_includes_head=True,
-                head_width=0.5,
-                color="red",
-            )
-
-        return axis
