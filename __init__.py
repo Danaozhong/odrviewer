@@ -13,15 +13,16 @@ def classFactory(iface):  # noqa: N802
             continue
 
         raise ImportError(
-        f"The dependency {pkg_dependency} for the OpenDRIVE Viewer "
-        "is not installed. "
-        "There are two ways to resolve this: "
-        "(1) install the 'qpip' plugin, restart QGIS, and "
-        "re-active the OpenDRIVE Viewer plugin. "
-        "(2) manually install the dependencies using: "
-        f"\"[QGIS_DIR]\\python-qgis.bat -m pip install -r {Path.home()}\\AppData\\Roaming\\QGIS\\QGIS3\\profiles\\"
-        "default\\python\\plugins\\odrviewer\\requirements.txt\""
+            f"The dependency {pkg_dependency} for the OpenDRIVE Viewer "
+            "is not installed. "
+            "There are two ways to resolve this: "
+            "(1) install the 'qpip' plugin, restart QGIS, and "
+            "re-active the OpenDRIVE Viewer plugin. "
+            "(2) manually install the dependencies using: "
+            f'"[QGIS_DIR]\\python-qgis.bat -m pip install -r {Path.home()}\\AppData\\Roaming\\QGIS\\QGIS3\\profiles\\'
+            'default\\python\\plugins\\odrviewer\\requirements.txt"'
         )
 
     from .odrviewer_plugin import OpenDriveViewer
+
     return OpenDriveViewer(iface)

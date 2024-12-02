@@ -3,12 +3,14 @@ from pathlib import Path
 
 from odrviewer.converter.convert_odr_to_qgis import load_odr_map
 
+FIXTURE_DIR = Path(__file__).parent.parent.resolve()
 
-def main_test() -> None:
-    """Loads a sample OpenDRIVE file, and checks if the conversion code doesn't crash."""
-    load_odr_map(Path(r"./odrviewer/sample_files/Town04.xodr"))
+
+def test_loading_sample_odr_file():
+    """This test case loads a sample OpenDRIVE map."""
+    load_odr_map(FIXTURE_DIR / "sample_files" / "Town04.xodr")
 
 
 if __name__ == "__main__":
     """Helper `main` when running this file in the debugger."""
-    main_test()
+    load_odr_map(Path(r"./odrviewer/sample_files/Town04.xodr"))
