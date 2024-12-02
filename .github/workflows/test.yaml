@@ -1,0 +1,29 @@
+name: Test running the QGIS Plugin
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: |
+          pip3 install -r requirements.txt
+
+      - name: Install QGIS Python Lib
+        run: |
+          sudo apt-get install gpgconf gpg software-properties-common
+          sudo wget -O /etc/apt/keyrings/qgis-archive-keyring.gpg https://download.qgis.org/downloads/qgis-archive-keyring.gpg
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3-qgis python3-pyqt5
+
+      - name: Run pytest
+        run: |
+          # Make sure Python knows about the QGIS libraries
+          pip3 install pytest
+          export PYTHONPATH=/usr/lib/python3/dist-packages/
+          python -m pytest
