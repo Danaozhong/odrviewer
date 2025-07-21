@@ -1,4 +1,5 @@
 """This file stores the definitions of an OpenDRIVE map loaded in QGIS."""
+
 from dataclasses import dataclass, field
 
 from PyQt5.QtCore import QVariant

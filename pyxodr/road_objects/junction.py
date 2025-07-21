@@ -3,11 +3,11 @@
 See https://publications.pages.asam.net/standards/ASAM_OpenDRIVE/ASAM_OpenDRIVE_Specification/latest/specification/12_junctions/12_01_introduction.html
 for more details.
 """
+
 from typing import Dict, List, Set
 
 import numpy as np
 from lxml import etree
-
 from odrviewer.pyxodr.road_objects.road import Road
 from odrviewer.pyxodr.utils import cached_property
 

@@ -1,8 +1,8 @@
 """This file stores all functions related to loading an OpenDRIVE map file."""
+
 from typing import List, Optional, Set
 
 from lxml import etree
-
 from odrviewer.pyxodr.road_objects.junction import Junction
 from odrviewer.pyxodr.road_objects.lane import ConnectionPosition
 from odrviewer.pyxodr.road_objects.road import Road

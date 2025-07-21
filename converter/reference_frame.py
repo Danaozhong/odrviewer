@@ -4,15 +4,15 @@ The reference frame is visualized by drawing an arrow of length=1 in x and y dir
 originating from the origin.
 This is used to simplify debugging and better understanding the OpenDRIVE geometry encoding.
 """
-import numpy as np
-from qgis.core import QgsFeature
-from shapely import LineString
 
+import numpy as np
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_reference_frame_fields
 from odrviewer.pyxodr.geometries.base import Geometry
 from odrviewer.pyxodr.road_objects.road import Road
+from qgis.core import QgsFeature
+from shapely import LineString
 
 
 def get_axis(

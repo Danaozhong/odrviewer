@@ -1,6 +1,9 @@
 """Functions to convert local coordinates to global WGS-84 coordinates."""
+
 from dataclasses import dataclass
 
+import shapely
+import shapely.affinity
 import shapely.ops
 from pyproj import Transformer
 

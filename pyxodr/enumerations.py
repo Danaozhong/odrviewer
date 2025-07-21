@@ -1,4 +1,5 @@
 """This file contains all enumeration types specified in OpenDRIVE."""
+
 from enum import Enum
 
 

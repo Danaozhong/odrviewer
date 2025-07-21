@@ -1,17 +1,17 @@
 """The main conversion functions to convert from OpenDRIVE to QGIS."""
-from pathlib import Path
 
-from pyproj import CRS, Transformer
-from qgis.core import Qgis, QgsFeature, QgsMessageLog
+from pathlib import Path
 
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.converter.lane import convert_lanes, convert_road_markings
 from odrviewer.converter.reference_frame import convert_reference_frames
 from odrviewer.converter.reference_line import convert_reference_line, convert_reference_line_segments
 from odrviewer.converter.signal import convert_signals
-from odrviewer.model.projections import WGS84
+from odrviewer.model.projections import MERCATOR, WGS84
 from odrviewer.model.qgis_odr_map import QGISOpenDriveMap
 from odrviewer.pyxodr.road_objects.network import RoadNetwork
+from pyproj import CRS, Transformer
+from qgis.core import Qgis, QgsFeature, QgsMessageLog
 
 
 def load_odr_map(odr_filename: Path) -> QGISOpenDriveMap:
@@ -26,8 +26,8 @@ def load_odr_map(odr_filename: Path) -> QGISOpenDriveMap:
         proj_str = rn.get_geometry_reference()
         from_crs = CRS.from_proj4(proj_str)
     except BaseException:
-        # if no proj string is set, or the proj string cannot be parsed, assume WGS-84 coordinates
-        from_crs = WGS84
+        # if no proj string is set, or the proj string cannot be parsed, assume Pseudo Mercator projection (meters)
+        from_crs = MERCATOR
     try:
         x_off, y_off, z_off, heading_off = rn.get_offset()
     except BaseException:

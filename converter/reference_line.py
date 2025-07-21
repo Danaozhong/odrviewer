@@ -1,13 +1,13 @@
 """Conversion functions to convert road reference lines to QGIS linestring features."""
-import numpy as np
-from qgis.core import QgsFeature
-from shapely import LineString
 
+import numpy as np
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_reference_line_segments_fields
 from odrviewer.pyxodr.road_objects.road import Road
 from odrviewer.pyxodr.utils.array import interpolate_path
+from qgis.core import QgsFeature
+from shapely import LineString
 
 
 def convert_reference_line(road: Road, transformer: GlobalTransformer) -> QgsFeature:
@@ -40,8 +40,7 @@ def convert_reference_line_segments(road: Road, transformer: GlobalTransformer) 
         ref_line_seg_feature.setAttribute("length", reference_line_geometry_segment.length)
         ref_line_seg_feature.setAttribute("xoffset", reference_line_geometry_segment.x_offset)
         ref_line_seg_feature.setAttribute("yoffset", reference_line_geometry_segment.y_offset)
-        ref_line_segments.append(ref_line_seg_feature)
-
         ref_line_seg_feature.setGeometry(shapely_geometry_to_qgs_geometry(reference_line_segment))
+        ref_line_segments.append(ref_line_seg_feature)
 
     return ref_line_segments

@@ -1,4 +1,5 @@
 """"Contains basic types commonly used in the conversion process."""
+
 from enum import Enum
 
 

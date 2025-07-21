@@ -1,10 +1,10 @@
 """Functions to process OpenDRIVE cubic polynomials geometries."""
+
 from typing import Optional
 
 import numpy as np
-from scipy.integrate import solve_ivp
-
 from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
+from scipy.integrate import solve_ivp
 
 
 class CubicPolynom(Geometry):

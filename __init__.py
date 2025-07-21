@@ -1,4 +1,5 @@
 """This module contains a QGIS plugin to visualize OpenDRIVE maps."""
+
 import importlib.util
 import sys
 from pathlib import Path

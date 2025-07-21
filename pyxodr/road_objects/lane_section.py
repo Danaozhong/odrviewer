@@ -1,12 +1,12 @@
 """Handles an OpenDRIVE lane section (a segment of a road)."""
+
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from lxml import etree
-from shapely.geometry import Polygon
-
 from odrviewer.pyxodr.road_objects.lane import ConnectionPosition, Lane, LaneOrientation, TrafficOrientation
 from odrviewer.pyxodr.utils import cached_property
+from shapely.geometry import Polygon
 
 
 class LaneSection:
@@ -47,9 +47,9 @@ class LaneSection:
         road_id: int,
         lane_section_ordinal: int,
         lane_section_xml: etree._Element,
-        lane_section_offset_line: np.ndarray,
-        lane_section_reference_line: np.ndarray,
-        lane_section_z: np.ndarray,
+        lane_section_offset_line: Optional[np.ndarray],
+        lane_section_reference_line: Optional[np.ndarray],
+        lane_section_z: Optional[np.ndarray],
         traffic_orientation: TrafficOrientation,
         ignored_lane_types: Optional[Set[str]] = None,
         s_start: float = 0.0,
@@ -59,8 +59,6 @@ class LaneSection:
         self.road_id = road_id
         self.lane_section_ordinal = lane_section_ordinal
         self.lane_section_xml = lane_section_xml
-        if len(lane_section_reference_line) < 2:
-            print("t")
         self.lane_section_offset_line = lane_section_offset_line
         self.lane_section_reference_line = lane_section_reference_line
         self.lane_section_z = lane_section_z
@@ -113,7 +111,7 @@ class LaneSection:
 
         return lanes
 
-    def get_offset_line(self, get_z: bool = True) -> np.ndarray:
+    def get_offset_line(self, get_z: bool = True) -> Optional[np.ndarray]:
         """Return the offset line coordinates of this lane section.
 
         Parameters
@@ -127,6 +125,9 @@ class LaneSection:
         np.ndarray
             Array of offset line coordinates.
         """
+        if self.lane_section_offset_line is None:
+            return None
+
         offset_line = self.lane_section_offset_line[:]  # To copy
         if get_z:
             offset_line = np.append(offset_line, self.lane_section_z[:, np.newaxis], axis=1)
@@ -191,10 +192,12 @@ class LaneSection:
         return lane_obj
 
     @cached_property
-    def boundary(self) -> Polygon:
+    def boundary(self) -> Optional[Polygon]:
         """Return the bounding polygon of this lane section."""
         left_border = self.lane_section_offset_line if self.left_lanes == [] else self.left_lanes[-1].boundary_line
         right_border = self.lane_section_offset_line if self.right_lanes == [] else self.right_lanes[-1].boundary_line
+        if left_border is None or right_border is None:
+            return None
         bounding_poly = Polygon(np.vstack((left_border, np.flip(right_border, axis=0))))
 
         return bounding_poly

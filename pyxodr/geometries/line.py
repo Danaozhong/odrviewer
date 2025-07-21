@@ -1,8 +1,8 @@
 """Functions to process OpenDRIVE line geometries."""
+
 from typing import Optional
 
 import numpy as np
-
 from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
 
 
@@ -11,12 +11,14 @@ class Line(Geometry):
 
     Parameters
     ----------
-    length : float
-        Length [m] of the spiral.
-    curvStart : float
-        Curvature at the start of the spiral.
-    curvEnd : float
-        Curvature at the end of the spiral.
+    x_offset : float
+        The start position on the x axis on the local frame.
+    y_offset : float
+        The start position on the y axis on the local frame.
+    heading_offset : float
+        The heading of the straight line.
+    length:
+        Length [m] of the line.
     """
 
     def __init__(self, x_offset: float, y_offset: float, heading_offset: float, length: Optional[float] = None):
