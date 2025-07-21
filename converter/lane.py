@@ -1,13 +1,13 @@
 """Converts an OpenDRIVE lane to a QGIS lane."""
-import numpy as np
-from qgis.core import QgsFeature
-from shapely import LineString, Polygon
 
+import numpy as np
 from odrviewer.converter.basic_types import LaneSide
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_boundary_fields, get_lanes_fields
 from odrviewer.pyxodr.road_objects.road import Road
+from qgis.core import QgsFeature
+from shapely import LineString, Polygon
 
 
 def create_lane_feature(
@@ -45,6 +45,8 @@ def convert_lanes(road: Road, transformer: GlobalTransformer) -> list[QgsFeature
         inner_boundary = lane_section.lane_section_offset_line
         for lane_index, lane in enumerate(lane_section.left_lanes):
             outer_boundary = lane.boundary_line
+            if outer_boundary is None:
+                continue
 
             lane_polygons.append(
                 create_lane_feature(
@@ -66,6 +68,9 @@ def convert_lanes(road: Road, transformer: GlobalTransformer) -> list[QgsFeature
         inner_boundary = lane_section.lane_section_offset_line
         for lane_index, lane in enumerate(lane_section.right_lanes):
             outer_boundary = lane.boundary_line
+            if outer_boundary is None:
+                # Ignore segments with no valid geometry
+                continue
 
             lane_polygons.append(
                 create_lane_feature(
@@ -100,7 +105,7 @@ def convert_road_markings(road: Road, transformer: GlobalTransformer) -> list[Qg
 
             for (start_s, end_s), road_mark in zip(s_ranges, road_marks):
                 boundary_geometry = lane.get_boundary_line_segment(start_s, end_s)
-                if len(boundary_geometry) < 2:
+                if boundary_geometry is None or len(boundary_geometry) < 2:
                     # drop segments that are below our pecision accuracy
                     continue
                 wgs84_boundary = transformer.translate_odr_geometry(LineString(boundary_geometry))

@@ -1,9 +1,9 @@
 """Contains classes and functions to store multiple geometries (line, arc, spiral) combined together."""
+
 from copy import deepcopy
 from typing import List
 
 import numpy as np
-
 from odrviewer.pyxodr.geometries.base import Geometry, NullGeometry
 
 

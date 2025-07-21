@@ -1,8 +1,8 @@
 """Functions to process OpenDRIVE spiral geometries."""
+
 from typing import Optional
 
 import numpy as np
-
 from odrviewer.pyxodr.geometries._standard_spiral import OdrSpiral
 from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
 

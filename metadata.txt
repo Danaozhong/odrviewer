@@ -15,6 +15,7 @@ about=This plugin is a viewer that supports visualization of OpenDRIVE map files
     Some code has been taken from https://github.com/driskai/pyxodr published under the MIT license.
 tracker=https://github.com/Danaozhong/odrviewer/issues
 repository=https://github.com/Danaozhong/odrviewer
+homepage=https://clemenszangl.de
 # End of mandatory metadata
 
 # Recommended items:

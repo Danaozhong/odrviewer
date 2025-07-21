@@ -1,4 +1,5 @@
 """Helper functions to process spirals."""
+
 import math
 from typing import Tuple
 

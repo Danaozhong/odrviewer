@@ -2,12 +2,12 @@
 
 These include x and y offsets, heading offset and a length parameter.
 """
+
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional
 
 import numpy as np
-
 from odrviewer.pyxodr.utils.array import fix_zero_directions
 
 
@@ -78,9 +78,12 @@ class Geometry(ABC):
             Resultant coordinates in the global frame.
         """
         offset_coordinates = np.array([x_offset, y_offset])
+
+        # Rotate the shape points.
         c, s = np.cos(heading_offset), np.sin(heading_offset)
         rotation_matrix = np.array(((c, -s), (s, c)))
 
+        # Translate to the set x and y positions.
         rotated_coords = np.dot(rotation_matrix, local_coords.T).T
         global_coords = rotated_coords + offset_coordinates
 

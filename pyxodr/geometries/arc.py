@@ -1,6 +1,6 @@
 """Functions to process OpenDRIVE arc geometries."""
-import numpy as np
 
+import numpy as np
 from odrviewer.pyxodr.geometries.base import Geometry, GeometryType
 
 

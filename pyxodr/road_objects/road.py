@@ -1,11 +1,10 @@
 """Stores functions to process OpenDRIVE roads."""
+
 from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
 from lxml import etree
-from shapely.geometry import Polygon
-
 from odrviewer.pyxodr.geometries import Arc, CubicPolynom, Line, MultiGeom, ParamCubicPolynom, Spiral
 from odrviewer.pyxodr.geometries.base import Geometry
 from odrviewer.pyxodr.road_objects.lane import ConnectionPosition, TrafficOrientation
@@ -13,6 +12,7 @@ from odrviewer.pyxodr.road_objects.lane_section import LaneSection
 from odrviewer.pyxodr.signals.signal import Signal
 from odrviewer.pyxodr.utils import cached_property
 from odrviewer.pyxodr.utils.array import interpolate_path
+from shapely.geometry import Polygon
 
 
 class Road:
@@ -401,14 +401,19 @@ class Road:
 
         def get_sub_linestring(
             linestring: npt.NDArray[np.float32], lengths: npt.NDArray[np.float32], start: float, end: float
-        ) -> npt.NDArray[np.float32]:
-            # Find indices where the distances are greater than or equal to 'start' and less than or equal to 'end'
+        ) -> Optional[npt.NDArray[np.float32]]:
+            if len(linestring) != len(lengths):
+                raise AssertionError("the geometry and length arrays need to be of the same length")
+            if start >= end:
+                return None
+
+            # Find indices where the distances are greater than or equal to 'start' and less than or equal to 'end'.
             start_idx = np.searchsorted(lengths, start, side="left")
-            end_idx = np.searchsorted(lengths, end, side="right")
-            if start_idx == 0 and end_idx == len(lengths) - 1:
+            end_idx = np.searchsorted(lengths, end, side="right")  # end_idx is not inclusive.
+            if start_idx == 0 and end_idx == len(lengths):
                 return linestring
 
-            # Handle cases where start_idx or end_idx might be out of bounds or exact matches are needed
+            # Handle cases where start_idx or end_idx might be out of bounds or exact matches are needed.
             rel_tol = 1e-8
             reuse_start_point = np.isclose(lengths[start_idx], start, atol=rel_tol) or start_idx == 0
             reuse_end_point = np.isclose(lengths[end_idx - 1], end, atol=rel_tol) or end_idx == len(lengths)
@@ -421,20 +426,20 @@ class Road:
                     linestring[distance_index] - linestring[distance_index - 1]
                 )
 
-            # Interpolate start point if needed (if the exact start point isn't at an existing node)
+            # Interpolate start point if needed (if the exact start point isn't at an existing node).
             if not reuse_start_point:
                 start_point = interpolate_point(start, start_idx)
-                sub_linestring = [start_point] + list(linestring[start_idx:end_idx])
+                sub_linestring = [start_point] + list(linestring[start_idx + 1 : end_idx])
             else:
                 sub_linestring = list(linestring[start_idx:end_idx])
 
-            # Interpolate the end point if needed (same approach as start)
+            # Interpolate the end point if needed (same approach as start).
             if not reuse_end_point:
                 end_point = interpolate_point(end, end_idx)
                 sub_linestring.append(end_point)
 
             if len(sub_linestring) < 2:
-                raise RuntimeError("sub linestring has less than two points")
+                return None
             return np.array(sub_linestring)
 
         lane_section_tuples = []
@@ -444,14 +449,6 @@ class Road:
 
             if end_length > reference_line_length:
                 end_length = reference_line_length
-
-            if start_length >= end_length:
-                # This segment doesn't make sense, there is no valid geometry associated with it
-                # as a fallback, use some geometries at the end
-                start_length = end_length - 0.1
-
-            if start_length >= end_length:
-                start_length = end_length - 0.1
 
             lane_section_tuples.append(
                 (

@@ -1,15 +1,15 @@
 """This file contains a plugin for QGIS to load and visualize OpenDRIVE maps."""
+
 import os.path
 from pathlib import Path
 from typing import Optional
 
+from odrviewer.converter.convert_odr_to_qgis import load_odr_map
+from odrviewer.styling.apply_qgis_styles import apply_qgis_styles
 from qgis.core import Qgis, QgsLayerTreeGroup, QgsMessageLog, QgsProject, QgsVectorLayer
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog
-
-from odrviewer.converter.convert_odr_to_qgis import load_odr_map
-from odrviewer.styling.apply_qgis_styles import apply_qgis_styles
 
 
 class OpenDriveViewer:

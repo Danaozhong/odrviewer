@@ -1,12 +1,12 @@
 """Contains the functions to convert OpenDRIVE signals to QGIS."""
-import numpy as np
-from qgis.core import QgsFeature
-from shapely import Point
 
+import numpy as np
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_signal_fields
 from odrviewer.pyxodr.road_objects.road import Road
+from qgis.core import QgsFeature
+from shapely import Point
 
 
 def convert_signals(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:

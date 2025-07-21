@@ -1,8 +1,10 @@
 """This file stored functionality related to parsing/visualizing an OpenDRIVE lane."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 try:
     from typing import Literal
@@ -11,7 +13,6 @@ except ImportError:
 
 import numpy as np
 from lxml import etree
-
 from odrviewer.pyxodr.enumerations import LaneChange, RoadMarkColor, RoadMarkType
 from odrviewer.pyxodr.geometries import CubicPolynom, MultiGeom
 from odrviewer.pyxodr.utils import cached_property
@@ -217,7 +218,7 @@ class Lane:
         return lane_type
 
     @cached_property
-    def boundary_line(self) -> np.ndarray:
+    def boundary_line(self) -> Optional[np.ndarray]:
         """Return the boundary line of this lane.
 
         Note this is the _far_ boundary, i.e. furthest from the road centre
@@ -229,9 +230,14 @@ class Lane:
         """
         return self.get_boundary_line_segment()
 
-    def get_boundary_line_segment(self, s_start=0.0, s_end=None) -> np.ndarray:
+    def get_boundary_line_segment(self, s_start=0.0, s_end=None) -> Optional[np.ndarray]:
         """Returns a subset of boundary geometry, based on a range for the 's' parameter."""
-        if len(self.lane_section_reference_line) == 0:
+        if self.lane_section_reference_line is None:
+            # No valid geometry, but we will tolerate it for now.
+            return None
+
+        if len(self.lane_section_reference_line) < 2:
+            # If there is a geometry, it must be valid.
             raise IndexError(f"Zero length reference line in lane {self}")
 
         lane_uses_widths = self.lane_xml.findall("width") != []

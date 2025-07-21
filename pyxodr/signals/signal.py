@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Optional
 
 from lxml.etree import _Element
-
 from odrviewer.pyxodr.enumerations import CountryCode, Orientation, Unit
 
 

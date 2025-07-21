@@ -1,24 +1,11 @@
 """Apply QGIS rendering styles for the OpenDRIVE map."""
 
+from odrviewer.model.qgis_odr_map import QGISOpenDriveMap
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from qgis.core import (
-    Qgis,
-    QgsCategorizedSymbolRenderer,
-    QgsMarkerLineSymbolLayer,
-    QgsMarkerSymbol,
-    QgsRendererCategory,
-    QgsRuleBasedRenderer,
-    QgsSimpleFillSymbolLayer,
-    QgsSimpleLineSymbolLayer,
-    QgsSimpleMarkerSymbolLayer,
-    QgsSingleSymbolRenderer,
-    QgsSymbol,
-    QgsVectorLayer,
-    QgsWkbTypes,
-)
-
-from odrviewer.model.qgis_odr_map import QGISOpenDriveMap
+from qgis.core import (Qgis, QgsCategorizedSymbolRenderer, QgsMarkerLineSymbolLayer, QgsMarkerSymbol,
+                       QgsRendererCategory, QgsRuleBasedRenderer, QgsSimpleFillSymbolLayer, QgsSimpleLineSymbolLayer,
+                       QgsSimpleMarkerSymbolLayer, QgsSingleSymbolRenderer, QgsSymbol, QgsVectorLayer, QgsWkbTypes)
 
 
 def apply_qgis_styles(odr_map: QGISOpenDriveMap) -> None:
