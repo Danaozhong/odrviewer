@@ -2,7 +2,7 @@
 name=OpenDRIVE Map Viewer
 qgisMinimumVersion=3.30
 description=This plugin adds support to visualize OpenDRIVE maps to QGIS.
-version=0.0.1
+version=0.0.2
 author=Clemens Zangl
 email=clemens.zangl@gmail.com
 about=This plugin is a viewer that supports visualization of OpenDRIVE map files (*.xodr).
