@@ -13,6 +13,7 @@ except ImportError:
 
 import numpy as np
 from lxml import etree
+
 from odrviewer.pyxodr.enumerations import LaneChange, RoadMarkColor, RoadMarkType
 from odrviewer.pyxodr.geometries import CubicPolynom, MultiGeom
 from odrviewer.pyxodr.utils import cached_property
@@ -210,7 +211,7 @@ class Lane:
         return connecting_ids
 
     @cached_property
-    def type(self) -> str:
+    def type(self) -> Optional[str]:
         """Get the OpenDRIVE type of this lane."""
         lane_type = self.lane_xml.attrib["type"]
         if lane_type == "none":

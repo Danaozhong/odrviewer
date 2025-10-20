@@ -1,19 +1,26 @@
 """Converts an OpenDRIVE lane to a QGIS lane."""
 
+from typing import Optional
+
 import numpy as np
+from qgis.core import QgsFeature
+from shapely import LineString, Polygon
+
 from odrviewer.converter.basic_types import LaneSide
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_boundary_fields, get_lanes_fields
 from odrviewer.pyxodr.road_objects.road import Road
-from qgis.core import QgsFeature
-from shapely import LineString, Polygon
 
 
 def create_lane_feature(
     transformer: GlobalTransformer,
     road_id: int,
+    road_name: Optional[str],
+    road_length: float,
+    road_rule: str,
     lane_id: int,
+    lane_type: Optional[str],
     side: LaneSide,
     lane_index: int,
     predecessor: list[int],
@@ -28,11 +35,15 @@ def create_lane_feature(
     lane_poly_feature.setGeometry(shapely_geometry_to_qgs_geometry(wgs84_polygon))
 
     lane_poly_feature.setAttribute("road_id", road_id)
+    lane_poly_feature.setAttribute("road_name", road_name if road_name is not None else "")
+    lane_poly_feature.setAttribute("road_length", road_length)
+    lane_poly_feature.setAttribute("road_rule", road_rule)
     lane_poly_feature.setAttribute("lane_id", lane_id)
+    lane_poly_feature.setAttribute("lane_type", lane_type if lane_type is not None else "")
     lane_poly_feature.setAttribute("side", side.name)
     lane_poly_feature.setAttribute("lane_index", lane_index)
-    lane_poly_feature.setAttribute("predecessor_ids", ", ".join(str(predecessor)))
-    lane_poly_feature.setAttribute("successor_ids", ", ".join(str(successor)))
+    lane_poly_feature.setAttribute("predecessor_ids", str(predecessor))
+    lane_poly_feature.setAttribute("successor_ids", str(successor))
 
     return lane_poly_feature
 
@@ -52,7 +63,11 @@ def convert_lanes(road: Road, transformer: GlobalTransformer) -> list[QgsFeature
                 create_lane_feature(
                     transformer=transformer,
                     road_id=road.id,
+                    road_name=road.name,
+                    road_length=road.length,
+                    road_rule=road.rule,
                     lane_id=lane.id,
+                    lane_type=lane.type,
                     side=LaneSide.LEFT,
                     lane_index=lane_index,
                     predecessor=lane.predecessor_ids,
@@ -76,7 +91,11 @@ def convert_lanes(road: Road, transformer: GlobalTransformer) -> list[QgsFeature
                 create_lane_feature(
                     transformer=transformer,
                     road_id=road.id,
+                    road_name=road.name,
+                    road_length=road.length,
+                    road_rule=road.rule,
                     lane_id=lane.id,
+                    lane_type=lane.type,
                     side=LaneSide.RIGHT,
                     lane_index=lane_index,
                     predecessor=lane.predecessor_ids,

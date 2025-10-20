@@ -90,8 +90,12 @@ def get_lanes_fields() -> QgsFields:
     """Gets the QGIS vector layer attributes for lane polygons."""
     fields = QgsFields()
     fields.append(QgsField("road_id", QVariant.String))
+    fields.append(QgsField("road_name", QVariant.String))
+    fields.append(QgsField("road_length", QVariant.Double))
+    fields.append(QgsField("road_rule", QVariant.String))
     fields.append(QgsField("lane_id", QVariant.Int))
     fields.append(QgsField("lane_index", QVariant.String))
+    fields.append(QgsField("lane_type", QVariant.String))
     fields.append(QgsField("side", QVariant.String))
     fields.append(QgsField("predecessor_ids", QVariant.String))
     fields.append(QgsField("successor_ids", QVariant.String))
