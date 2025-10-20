@@ -1,10 +1,12 @@
 """Stores functions to process OpenDRIVE roads."""
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
 from lxml import etree
+from shapely.geometry import Polygon
+
 from odrviewer.pyxodr.geometries import Arc, CubicPolynom, Line, MultiGeom, ParamCubicPolynom, Spiral
 from odrviewer.pyxodr.geometries.base import Geometry
 from odrviewer.pyxodr.road_objects.lane import ConnectionPosition, TrafficOrientation
@@ -12,7 +14,6 @@ from odrviewer.pyxodr.road_objects.lane_section import LaneSection
 from odrviewer.pyxodr.signals.signal import Signal
 from odrviewer.pyxodr.utils import cached_property
 from odrviewer.pyxodr.utils.array import interpolate_path
-from shapely.geometry import Polygon
 
 
 class Road:
@@ -79,11 +80,15 @@ class Road:
 
         return traffic_orientation
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str) -> Any:
         """Easier access to the XML attributes."""
         return self.road_xml.attrib[name]
 
-    def __hash__(self):
+    def get(self, name: str) -> Optional[Any]:
+        """Easier access to the XML attributes, with optional return value."""
+        return self.road_xml.attrib.get(name)
+
+    def __hash__(self) -> int:
         """Calculates a hash based on the road ID."""
         return hash(self.id)
 
@@ -313,10 +318,25 @@ class Road:
         """Get the OpenDRIVE ID of this road."""
         return self["id"]
 
-    def _link_lane_sections(self):
-        """Connect all lane section objects within this road with their neighbours.
+    @property
+    def name(self) -> Optional[str]:
+        """Returns the name of the road (Optional parameter)."""
+        return self.get("name")
 
-        Neighbours == the lane section objects corresponding to their successors and
+    @property
+    def length(self) -> float:
+        """Returns the length of the road."""
+        return float(self["length"])
+
+    @property
+    def rule(self) -> str:
+        """Returns the traffic rule of the road (RHT or LHT)."""
+        return self.get("rule") or "RHT"
+
+    def _link_lane_sections(self):
+        """Connect all lane section objects within this road with their neighbors.
+
+        Neighbors == the lane section objects corresponding to their successors and
         predecessors. This method will be called as part of the "connection" tree of
         calls. This method is called by _link_roads in RoadNetwork, which is the root
         of the tree.
