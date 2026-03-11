@@ -9,29 +9,29 @@ import numpy as np
 from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_reference_frame_fields
-from odrviewer.pyxodr.geometries.base import Geometry
-from odrviewer.pyxodr.road_objects.road import Road
+from py_opendrive.evaluator.evaluated_lane_section import EvaluatedRoad
+from py_opendrive.geometries.road_reference_line import Geometries
 from qgis.core import QgsFeature
 from shapely import LineString
 
 
 def get_axis(
-    transformer: GlobalTransformer, road_id: str, segment_index: int, reference_geometry: Geometry, axis_label: str
+    transformer: GlobalTransformer, road_id: str, segment_index: int, reference_geometry: Geometries, axis_label: str
 ) -> QgsFeature:
     """Returns either the X or Y axis of a frame visualization."""
     num_samples = 2
     # Construct direction vector directly from the heading (in radians)
     if axis_label.lower() == "x":
         direction_vector = np.array(
-            [np.cos(reference_geometry.heading_offset), np.sin(reference_geometry.heading_offset)]
+            [np.cos(reference_geometry.hdg), np.sin(reference_geometry.hdg)]
         )
     else:
         direction_vector = np.array(
-            [-np.sin(reference_geometry.heading_offset), np.cos(reference_geometry.heading_offset)]
+            [-np.sin(reference_geometry.hdg), np.cos(reference_geometry.hdg)]
         )
     # Note this direction vector is normalized by construction
     origin_coordinates_tensor = np.tile(
-        np.array([reference_geometry.x_offset, reference_geometry.y_offset]), (num_samples, 1)
+        np.array([reference_geometry.x, reference_geometry.y]), (num_samples, 1)
     )
     direction_tensor = np.tile(direction_vector, (num_samples, 1))
 
@@ -44,14 +44,14 @@ def get_axis(
     ref_frame_feature.setAttribute("segment_index", segment_index)
     ref_frame_feature.setAttribute("axis", axis_label)
 
-    ref_frame_feature.setAttribute("heading", reference_geometry.heading_offset)
-    ref_frame_feature.setAttribute("xoffset", reference_geometry.x_offset)
-    ref_frame_feature.setAttribute("yoffset", reference_geometry.y_offset)
+    ref_frame_feature.setAttribute("heading", reference_geometry.hdg)
+    ref_frame_feature.setAttribute("xoffset", reference_geometry.x)
+    ref_frame_feature.setAttribute("yoffset", reference_geometry.y)
     ref_frame_feature.setGeometry(shapely_geometry_to_qgs_geometry(LineString(final_coordinates)))
     return ref_frame_feature
 
 
-def convert_reference_frames(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
+def convert_reference_frames(road: EvaluatedRoad) -> list[QgsFeature]:
     """Takes all reference frames from the road reference line, and converts them to QGIS features."""
     ref_line_segments: list[QgsFeature] = []
     for segment_index, reference_line_geometry_segment in enumerate(road.reference_line_geometries):

@@ -146,13 +146,13 @@ class OpenDriveViewer:
             return
 
         odr_filename = Path(odr_filename_str)
-        try:
-            # Try to load the map.
-            qgis_map = load_odr_map(odr_filename)
+        #try:
+        # Try to load the map.
+        qgis_map = load_odr_map(odr_filename)
 
-        except AssertionError as e:
-            print(f"failed to load map: {e}")
-            return
+        #except AssertionError as e:
+        #    print(f"failed to load map: {e}")
+        #    return
 
         # The map was loaded successfully, transfer the ownership of the vector layers to QGIS
         apply_qgis_styles(qgis_map)
@@ -166,6 +166,7 @@ class OpenDriveViewer:
         self.load_layer(qgis_map.reference_line_segments, "reference_line_segments", current_map_group, False)
         self.load_layer(qgis_map.reference_frames, "reference_frames", current_map_group, False)
         self.load_layer(qgis_map.lanes, "lanes", current_map_group)
+        self.load_layer(qgis_map.speed_limits, "speed_limits", current_map_group)
 
     def load_layer(self, qgis_layer: QgsVectorLayer, name: str, group: QgsLayerTreeGroup, visible=True) -> None:
         """Adds a QGIS vector layer into QGIS. It will log an error if loading failed."""

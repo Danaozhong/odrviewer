@@ -1,46 +1,44 @@
 """Conversion functions to convert road reference lines to QGIS linestring features."""
 
-import numpy as np
-from odrviewer.converter.global_transformer import GlobalTransformer
+from odrviewer.converter.geometry import gdf_to_linestring
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
 from odrviewer.model.qgis_odr_map import get_reference_line_segments_fields
-from odrviewer.pyxodr.road_objects.road import Road
-from odrviewer.pyxodr.utils.array import interpolate_path
+from py_opendrive.evaluator.evaluated_lane_section import EvaluatedRoad
 from qgis.core import QgsFeature
-from shapely import LineString
 
 
-def convert_reference_line(road: Road, transformer: GlobalTransformer) -> QgsFeature:
+def convert_reference_line(road: EvaluatedRoad) -> QgsFeature:
     """Converts the reference line within an OpenDRIVE road to a QGS vector layer feature."""
-    reference_line = transformer.translate_odr_geometry(LineString(road.reference_line))
     ref_line_feature = QgsFeature()
-    ref_line_feature.setGeometry(shapely_geometry_to_qgs_geometry(reference_line))
+    ref_line_feature.setGeometry(shapely_geometry_to_qgs_geometry(gdf_to_linestring(road.evaluated_reference_line)))
     return ref_line_feature
 
 
-def convert_reference_line_segments(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
+def convert_reference_line_segments(road: EvaluatedRoad) -> list[QgsFeature]:
     """Converts all reference line geometry segments within an OpenDRIVE road to QGS vector layer features."""
     ref_line_segments: list[QgsFeature] = []
-    for segment_index, reference_line_geometry_segment in enumerate(road.reference_line_geometries):
-        # evaluate the reference line segment geometry
-        geometry_coordinates = reference_line_geometry_segment.evaluate_geometry(road.resolution)
-        geometry_coordinates = np.array(geometry_coordinates, dtype=object)
-        stacked_coordinates = np.vstack(geometry_coordinates).astype(np.float64)
-        stacked_coordinates = interpolate_path(stacked_coordinates, resolution=road.resolution)
-        reference_line_segment = transformer.translate_odr_geometry(LineString(stacked_coordinates))
+    for lane_section_index, lane_section in enumerate(road.evaluated_lane_sections):
+        for _, reference_line_geometry_segment in lane_section.reference_line_geometry.iterrows():
+            # evaluate the reference line segment geometry
 
-        # Create a line segment feature in QGIS.
-        ref_line_seg_feature = QgsFeature(get_reference_line_segments_fields())
-        ref_line_seg_feature.setAttribute("id", road.id)
-        ref_line_seg_feature.setAttribute("segment_index", segment_index)
-        ref_line_seg_feature.setAttribute("type", reference_line_geometry_segment.geometry_type.name)
-        ref_line_seg_feature.setAttribute("params", str(reference_line_geometry_segment))
+            # Create a line segment feature in QGIS.
+            ref_line_seg_feature = QgsFeature(get_reference_line_segments_fields())
+            ref_line_seg_feature.setAttribute("id", road.road.id)
+            ref_line_seg_feature.setAttribute("geometry_segment_index", reference_line_geometry_segment["geometry_index"])
+            ref_line_seg_feature.setAttribute("lane_section_index", lane_section_index)
+            ref_line_seg_feature.setAttribute("type", reference_line_geometry_segment["geometry_type"])
+            ref_line_seg_feature.setAttribute("p", reference_line_geometry_segment["p"])
+            ref_line_seg_feature.setAttribute("s", reference_line_geometry_segment["s"])
 
-        ref_line_seg_feature.setAttribute("heading", reference_line_geometry_segment.heading_offset)
-        ref_line_seg_feature.setAttribute("length", reference_line_geometry_segment.length)
-        ref_line_seg_feature.setAttribute("xoffset", reference_line_geometry_segment.x_offset)
-        ref_line_seg_feature.setAttribute("yoffset", reference_line_geometry_segment.y_offset)
-        ref_line_seg_feature.setGeometry(shapely_geometry_to_qgs_geometry(reference_line_segment))
-        ref_line_segments.append(ref_line_seg_feature)
+            geometry_element = road.road.plan_view.geometries[int(reference_line_geometry_segment["geometry_index"])]
+
+            ref_line_seg_feature.setAttribute("params", str(geometry_element))
+
+            ref_line_seg_feature.setAttribute("heading", geometry_element.hdg)
+            ref_line_seg_feature.setAttribute("length", geometry_element.length)
+            ref_line_seg_feature.setAttribute("xoffset", geometry_element.x)
+            ref_line_seg_feature.setAttribute("yoffset", geometry_element.y)
+            ref_line_seg_feature.setGeometry(shapely_geometry_to_qgs_geometry(reference_line_geometry_segment.geometry))
+            ref_line_segments.append(ref_line_seg_feature)
 
     return ref_line_segments

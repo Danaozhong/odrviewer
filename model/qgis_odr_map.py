@@ -17,7 +17,7 @@ class QGISOpenDriveMap:
 
     # All reference line geometry segments
     reference_line_segments: QgsVectorLayer = field(
-        default_factory=lambda: QgsVectorLayer("LineString?crs=EPSG:4326", "reference_line_segments", "memory")
+        default_factory=lambda: QgsVectorLayer("Point?crs=EPSG:4326", "reference_line_segments", "memory")
     )
 
     # The reference frames.
@@ -27,6 +27,7 @@ class QGISOpenDriveMap:
 
     # The lane polygons.
     lanes: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("Polygon?crs=EPSG:4326", "lanes", "memory"))
+    speed_limits: QgsVectorLayer = field(default_factory=lambda: QgsVectorLayer("Polygon?crs=EPSG:4326", "speed_limits", "memory"))
 
     # Lane lines / boundaries
     boundaries: QgsVectorLayer = field(
@@ -39,6 +40,7 @@ class QGISOpenDriveMap:
     def initialize_fields(self) -> None:
         """This function initializes all the data fields of each feature."""
         initialize_fields(self.lanes, get_lanes_fields())
+        initialize_fields(self.speed_limits, get_speed_limits_fields())
         initialize_fields(self.reference_line_segments, get_reference_line_segments_fields())
         initialize_fields(self.reference_frames, get_reference_frame_fields())
         initialize_fields(self.boundaries, get_boundary_fields())
@@ -64,13 +66,16 @@ def get_reference_line_segments_fields() -> QgsFields:
     """Gets the QGIS vector layer attributes for the reference line segments."""
     fields = QgsFields()
     fields.append(QgsField("id", QVariant.String))
-    fields.append(QgsField("segment_index", QVariant.Int))
+    fields.append(QgsField("geometry_segment_index", QVariant.Int))
+    fields.append(QgsField("lane_section_index", QVariant.Int))
     fields.append(QgsField("type", QVariant.String))
     fields.append(QgsField("params", QVariant.String))
     fields.append(QgsField("length", QVariant.Double))
     fields.append(QgsField("heading", QVariant.Double))
     fields.append(QgsField("xoffset", QVariant.Double))
     fields.append(QgsField("yoffset", QVariant.Double))
+    fields.append(QgsField("s", QVariant.Double))
+    fields.append(QgsField("p", QVariant.Double))
     return fields
 
 
@@ -90,17 +95,28 @@ def get_lanes_fields() -> QgsFields:
     """Gets the QGIS vector layer attributes for lane polygons."""
     fields = QgsFields()
     fields.append(QgsField("road_id", QVariant.String))
+    fields.append(QgsField("junction", QVariant.String))
     fields.append(QgsField("road_name", QVariant.String))
     fields.append(QgsField("road_length", QVariant.Double))
     fields.append(QgsField("road_rule", QVariant.String))
+    fields.append(QgsField("lane_section_idx", QVariant.Int))
     fields.append(QgsField("lane_id", QVariant.Int))
-    fields.append(QgsField("lane_index", QVariant.String))
+    fields.append(QgsField("lane_index", QVariant.Int))
     fields.append(QgsField("lane_type", QVariant.String))
     fields.append(QgsField("side", QVariant.String))
     fields.append(QgsField("predecessor_ids", QVariant.String))
     fields.append(QgsField("successor_ids", QVariant.String))
     return fields
 
+def get_speed_limits_fields() -> QgsFields:
+    """Gets the QGIS vector layer attributes for speed limit polygons."""
+    fields = QgsFields()
+    fields.append(QgsField("road_id", QVariant.String))
+    fields.append(QgsField("lane_id", QVariant.Int))
+    fields.append(QgsField("s_offset", QVariant.Double))
+    fields.append(QgsField("max", QVariant.Double))
+    fields.append(QgsField("unit", QVariant.String))
+    return fields
 
 def get_boundary_fields() -> QgsFields:
     """Gets the QGIS vector layer attributes for boundaries (i.e. painted line, curb)."""

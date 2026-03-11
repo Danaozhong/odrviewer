@@ -15,7 +15,7 @@ def apply_qgis_styles(odr_map: QGISOpenDriveMap) -> None:
     more intuitive, such as pre-categorizing traffic signal types,
     or boundary types (e.g. dashed white line).
     """
-    apply_road_reference_line_style(odr_map.reference_line_segments)
+    apply_road_reference_point_style(odr_map.reference_line_segments)
     apply_road_reference_line_style(odr_map.reference_lines)
     apply_road_reference_frame_style(odr_map.reference_frames)
     apply_lane_polygon_style(odr_map.lanes)
@@ -69,6 +69,20 @@ def apply_road_reference_frame_style(reference_frame_layer: QgsVectorLayer) -> N
     cat_renderer.addCategory(QgsRendererCategory("x", get_arrow_style(QColor.fromRgb(255, 0, 0)), "x"))
     cat_renderer.addCategory(QgsRendererCategory("y", get_arrow_style(QColor.fromRgb(0, 255, 0)), "y"))
     reference_frame_layer.setRenderer(cat_renderer)
+
+
+def apply_road_reference_point_style(reference_line_layer: QgsVectorLayer) -> None:
+    """Applies a custom QGIS style for the reference line vector layer."""
+
+    def get_point_style(color: QColor) -> QgsSymbol:
+        symbol = get_default_point_symbol_type()
+        point_symbol_layer = QgsSimpleMarkerSymbolLayer()
+        point_symbol_layer.setColor(color)
+        symbol.changeSymbolLayer(0, point_symbol_layer)
+        return symbol
+
+    reference_line_layer.setRenderer(QgsSingleSymbolRenderer(get_point_style(QColor(50, 50, 50))))
+
 
 
 def apply_road_reference_line_style(reference_line_layer: QgsVectorLayer) -> None:
