@@ -60,7 +60,7 @@ class Spiral(Geometry):
             Array of local (u, v) coordinate pairs.
         """
         s_offset = self.curvStart / self.curvature_rate_of_change
-        offset_s_array = p_array * self.length + s_offset
+        offset_s_array = p_array + s_offset
 
         standard_coords = []
         for s in offset_s_array:
