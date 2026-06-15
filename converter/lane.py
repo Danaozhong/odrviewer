@@ -1,151 +1,106 @@
 """Converts an OpenDRIVE lane to a QGIS lane."""
 
-from typing import Optional
 
-import numpy as np
-from qgis.core import QgsFeature
-from shapely import LineString, Polygon
+from typing import Optional
+from odrviewer.converter.geometry import gdf_to_linestring
+from qgis.core import QgsFeature, QgsMessageLog, Qgis
+from shapely import Polygon
 
 from odrviewer.converter.basic_types import LaneSide
-from odrviewer.converter.global_transformer import GlobalTransformer
 from odrviewer.geometry import shapely_geometry_to_qgs_geometry
-from odrviewer.model.qgis_odr_map import get_boundary_fields, get_lanes_fields
-from odrviewer.pyxodr.road_objects.road import Road
-
+from odrviewer.model.qgis_odr_map import get_lanes_fields
+from py_opendrive.model.roads.road import Road
+from py_opendrive.evaluator.evaluated_lane_section import EvaluatedLane, EvaluatedLaneSection, EvaluatedRoad
+from odrviewer.model.qgis_odr_map import QGISOpenDriveMap
+from odrviewer.converter.speed_limit import create_speed_limit_features_for_lane
 
 def create_lane_feature(
-    transformer: GlobalTransformer,
-    road_id: int,
-    road_name: Optional[str],
-    road_length: float,
-    road_rule: str,
-    lane_id: int,
-    lane_type: Optional[str],
+    road: Road,
+    lane_section: EvaluatedLaneSection,
+    lane_section_idx: int,
+    lane: EvaluatedLane,
     side: LaneSide,
     lane_index: int,
     predecessor: list[int],
     successor: list[int],
-    inner_boundary,
-    outer_boundary,
-) -> QgsFeature:
+) -> Optional[QgsFeature]:
     """Creates a QGIS vector layer feature from an OpenDRIVE lane."""
-    lane_polygon = Polygon(np.vstack((inner_boundary, np.flip(outer_boundary, axis=0))))
-    wgs84_polygon = transformer.translate_odr_geometry(lane_polygon)
-    lane_poly_feature = QgsFeature(get_lanes_fields())
-    lane_poly_feature.setGeometry(shapely_geometry_to_qgs_geometry(wgs84_polygon))
+    left_boundary_linestring = gdf_to_linestring(lane_section.boundaries[lane.left_boundary_index])
+    right_boundary_linestring = gdf_to_linestring(lane_section.boundaries[lane.right_boundary_index])
 
-    lane_poly_feature.setAttribute("road_id", road_id)
-    lane_poly_feature.setAttribute("road_name", road_name if road_name is not None else "")
-    lane_poly_feature.setAttribute("road_length", road_length)
-    lane_poly_feature.setAttribute("road_rule", road_rule)
-    lane_poly_feature.setAttribute("lane_id", lane_id)
-    lane_poly_feature.setAttribute("lane_type", lane_type if lane_type is not None else "")
+    # 2. Extract coordinates
+    coords1 = list(left_boundary_linestring.coords)
+    coords2 = list(right_boundary_linestring.coords)
+
+    # 3. Reverse the second line's coordinates to create a closed loop
+    coords2_reversed = coords2[::-1]
+
+    # 4. Concatenate the coordinate lists to form the exterior ring
+    polygon_coords = coords1 + coords2_reversed
+
+    # 5. Create the Polygon object
+    # The constructor automatically closes the ring by connecting the last point to the first.
+    lane_polygon = Polygon(polygon_coords)
+
+
+    if lane_polygon.is_empty or not lane_polygon.is_valid:
+        QgsMessageLog.logMessage(f"Lane {lane.lane.id} has invalid polygon geometry", level=Qgis.Warning)
+        return None
+    lane_poly_feature = QgsFeature(get_lanes_fields())
+    lane_poly_feature.setGeometry(shapely_geometry_to_qgs_geometry(lane_polygon))
+
+    lane_poly_feature.setAttribute("road_id", road.id)
+    lane_poly_feature.setAttribute("junction", road.junction)
+    lane_poly_feature.setAttribute("road_name", road.name)
+    lane_poly_feature.setAttribute("road_length", road.length)
+    lane_poly_feature.setAttribute("road_rule", road.rule.name if road.rule else "")
+    lane_poly_feature.setAttribute("lane_section_idx", lane_section_idx)
+    lane_poly_feature.setAttribute("lane_id", lane.lane.id)
+    lane_poly_feature.setAttribute("lane_type", lane.lane.type.name)
     lane_poly_feature.setAttribute("side", side.name)
     lane_poly_feature.setAttribute("lane_index", lane_index)
-    lane_poly_feature.setAttribute("predecessor_ids", str(predecessor))
-    lane_poly_feature.setAttribute("successor_ids", str(successor))
+    lane_poly_feature.setAttribute("predecessor_ids", "")
+    lane_poly_feature.setAttribute("successor_ids", "")
 
     return lane_poly_feature
 
 
-def convert_lanes(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
+def convert_lanes(road: EvaluatedRoad, qgis_map: QGISOpenDriveMap) -> None:
     """Converts all lanes of a OpenDRIVE road."""
+
+    if road.road.id == "684" and road.road.junction == "669":
+        print("T")
     lane_polygons: list[QgsFeature] = []
-    for lane_section in road.lane_sections:
+    speed_limit_features: list[QgsFeature] = []
+    for lane_section_idx, lane_section in enumerate(road.evaluated_lane_sections):
         # start processing the left lanes, if present
-        inner_boundary = lane_section.lane_section_offset_line
-        for lane_index, lane in enumerate(lane_section.left_lanes):
-            outer_boundary = lane.boundary_line
-            if outer_boundary is None:
-                continue
+        lanes: list[tuple[LaneSide, list[EvaluatedLane]]] = [(LaneSide.LEFT, lane_section.left_lanes), (LaneSide.RIGHT, lane_section.right_lanes)]
+        for side, lane_list in lanes:
+            for lane_index, lane in enumerate(lane_list):
+                lane_feature = create_lane_feature(
+                        road=road.road,
+                        lane_section=lane_section,
+                        lane_section_idx=lane_section_idx,
+                        lane=lane,
+                        side=side,
+                        lane_index=lane_index,
+                        predecessor=[],
+                        successor=[],
+                    )
+                # The conversion can fail, for example if the geometry is invalid.
+                if lane_feature:
+                    lane_polygons.append(lane_feature)
 
-            lane_polygons.append(
-                create_lane_feature(
-                    transformer=transformer,
-                    road_id=road.id,
-                    road_name=road.name,
-                    road_length=road.length,
-                    road_rule=road.rule,
-                    lane_id=lane.id,
-                    lane_type=lane.type,
-                    side=LaneSide.LEFT,
-                    lane_index=lane_index,
-                    predecessor=lane.predecessor_ids,
-                    successor=lane.successor_ids,
-                    inner_boundary=inner_boundary,
-                    outer_boundary=outer_boundary,
+                speed_limit_features += create_speed_limit_features_for_lane(
+                    road=road.road,
+                    lane_section=lane_section,
+                    lane=lane,
                 )
-            )
-            # the outer boundary is the inner boundary of the next lane
-            inner_boundary = outer_boundary
 
-        # process the right lanes, if they exist
-        inner_boundary = lane_section.lane_section_offset_line
-        for lane_index, lane in enumerate(lane_section.right_lanes):
-            outer_boundary = lane.boundary_line
-            if outer_boundary is None:
-                # Ignore segments with no valid geometry
-                continue
+    if len(speed_limit_features) > 0:
+        if not qgis_map.speed_limits.dataProvider().addFeatures(speed_limit_features):
+            QgsMessageLog.logMessage("failed to add speed limit features to QGIS map", level=Qgis.Warning)
+        
+    if not qgis_map.lanes.dataProvider().addFeatures(lane_polygons):
+        QgsMessageLog.logMessage("failed to add road polygon to QGIS map", level=Qgis.Warning)
 
-            lane_polygons.append(
-                create_lane_feature(
-                    transformer=transformer,
-                    road_id=road.id,
-                    road_name=road.name,
-                    road_length=road.length,
-                    road_rule=road.rule,
-                    lane_id=lane.id,
-                    lane_type=lane.type,
-                    side=LaneSide.RIGHT,
-                    lane_index=lane_index,
-                    predecessor=lane.predecessor_ids,
-                    successor=lane.successor_ids,
-                    inner_boundary=inner_boundary,
-                    outer_boundary=outer_boundary,
-                )
-            )
-
-            inner_boundary = outer_boundary
-    return lane_polygons
-
-
-def convert_road_markings(road: Road, transformer: GlobalTransformer) -> list[QgsFeature]:
-    """Coverts all road markings (boundaries such as painted dashed lines into QGIS features."""
-    road_markings: list[QgsFeature] = []
-
-    for lane_section in road.lane_sections:
-        for lane in lane_section.lanes:
-            road_marks = lane.road_marks
-            if len(road_marks) == 0:
-                continue
-
-            s_values = [rm.s_offset for rm in road_marks]
-            s_ranges = zip(s_values, s_values[1::] + [None])
-
-            for (start_s, end_s), road_mark in zip(s_ranges, road_marks):
-                boundary_geometry = lane.get_boundary_line_segment(start_s, end_s)
-                if boundary_geometry is None or len(boundary_geometry) < 2:
-                    # drop segments that are below our pecision accuracy
-                    continue
-                wgs84_boundary = transformer.translate_odr_geometry(LineString(boundary_geometry))
-
-                lane_poly_feature = QgsFeature(get_boundary_fields())
-                lane_poly_feature.setGeometry(shapely_geometry_to_qgs_geometry(wgs84_boundary))
-
-                lane_poly_feature.setAttribute("road_id", road.id)
-                lane_poly_feature.setAttribute("lane_id", lane.id)
-                lane_poly_feature.setAttribute("color", road_mark.color)
-                lane_poly_feature.setAttribute("height", road_mark.height if road_mark.height is not None else 0.0)
-                lane_poly_feature.setAttribute(
-                    "lane_change", road_mark.lane_change if road_mark.lane_change is not None else "None"
-                )
-                lane_poly_feature.setAttribute(
-                    "material", road_mark.material if road_mark.material is not None else "invalid"
-                )
-                lane_poly_feature.setAttribute("s_offset", road_mark.s_offset)
-                lane_poly_feature.setAttribute("type", road_mark.type)
-                lane_poly_feature.setAttribute("weight", road_mark.weight if road_mark.weight is not None else 0.0)
-                lane_poly_feature.setAttribute("width", road_mark.width if road_mark.width is not None else 0.0)
-                road_markings.append(lane_poly_feature)
-
-    return road_markings
